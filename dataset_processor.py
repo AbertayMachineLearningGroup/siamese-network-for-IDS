@@ -12,14 +12,25 @@ from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 class DatasetHandler:
-    def __init__(self, path, verbose = True):
-        self.dataset = pd.read_csv(path, header=None)
-        self.dataset[41] = self.dataset[41].str[:-1]
-        self.dataset[42] = ''        #to add class (DoS, U2R, ....)
-        self.dataset = self.dataset.values
-        
-        self.add_kdd_main_classes(verbose)
-       
+    def __init__(self, path, dataset_name, verbose = True):
+        self.dataset_name = dataset_name
+        if dataset_name == 'kdd':
+            self.dataset = pd.read_csv(path, header=None)
+            self.dataset[41] = self.dataset[41].str[:-1]
+            self.dataset[42] = ''        #to add class (DoS, U2R, ....)
+            self.dataset = self.dataset.values
+            
+            self.add_kdd_main_classes(verbose)
+        elif dataset_name == 'STA':
+           normal_path = path + '/11jun.10percentNormalno_syn.csv'
+           dos_path = path + '/14jun.10percentAttackno_syn.csv'
+           ddos_path = path + '/15jun.10percentAttackno_syn.csv'
+            
+           self.dataset_dictionary = {}  
+           self.dataset_dictionary['normal'] = pd.read_csv(normal_path, header = None).values
+           self.dataset_dictionary['dos'] = pd.read_csv(dos_path, header = None).values
+           self.dataset_dictionary['ddos'] = pd.read_csv(ddos_path, header = None).values
+
     
     def add_kdd_main_classes(self, verbose):
         base_classes_map = {}
@@ -55,23 +66,28 @@ class DatasetHandler:
             self.dataset[self.dataset[:, 41] == key, 42] = base_classes_map[key]
     
     def get_classes(self):
-        temp = np.unique(self.dataset[:, 42])
-        temp[0], temp[1] = temp[1], temp[0]
+        print(self.dataset_name)
+        if self.dataset_name == 'kdd':
+            temp = np.unique(self.dataset[:, 42])
+            temp[0], temp[1] = temp[1], temp[0]
+        elif self.dataset_name == 'STA':
+            temp = [*self.dataset_dictionary.keys]
         return temp
     
     def encode_split(self, training_categories, testing_categories, max_instances_count = -1, verbose = True):
         self.training_categories = training_categories
         self.testing_categories = testing_categories
         
-        label_encoder_1 = LabelEncoder()
-        label_encoder_2 = LabelEncoder()
-        label_encoder_3 = LabelEncoder()
-        one_hot_encoder = OneHotEncoder(categorical_features = [1,2,3])
-
-        self.dataset[:, 1] = label_encoder_1.fit_transform(self.dataset[:, 1])
-        self.dataset[:, 2] = label_encoder_2.fit_transform(self.dataset[:, 2])        
-        self.dataset[:, 3] = label_encoder_3.fit_transform(self.dataset[:, 3])
-        self.dataset_features = one_hot_encoder.fit_transform(self.dataset[:, :-2]).toarray()
+        if self.dataset_name == 'kdd':
+            label_encoder_1 = LabelEncoder()
+            label_encoder_2 = LabelEncoder()
+            label_encoder_3 = LabelEncoder()
+            one_hot_encoder = OneHotEncoder(categorical_features = [1,2,3])
+    
+            self.dataset[:, 1] = label_encoder_1.fit_transform(self.dataset[:, 1])
+            self.dataset[:, 2] = label_encoder_2.fit_transform(self.dataset[:, 2])        
+            self.dataset[:, 3] = label_encoder_3.fit_transform(self.dataset[:, 3])
+            self.dataset_features = one_hot_encoder.fit_transform(self.dataset[:, :-2]).toarray()
         
         self.training_dataset = {}
         self.testing_dataset = {}
@@ -84,7 +100,11 @@ class DatasetHandler:
         if training_categories == testing_categories:
             print('\nTraining:Testing 80%:20%\n')
             for category in training_categories:
-                temp = self.dataset_features[self.dataset[:, 42] == category , :]
+                if self.dataset_name == 'kdd':
+                    temp = self.dataset_features[self.dataset[:, 42] == category , :]
+                elif self.dataset_name == 'STA':
+                    temp = self.dataset_dictionary[category]
+                    
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)

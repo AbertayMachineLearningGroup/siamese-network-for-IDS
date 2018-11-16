@@ -26,42 +26,54 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', type = str2bool, help = 'If true, prints will be displayed')
     parser.add_argument('--path', help = 'Path of the dataset csv or files directory')
     parser.add_argument('--network_id', help = 'Siamese Network ID ')
-    parser.add_argument('--batch_size', help = '')
-    parser.add_argument('--testing_batch_size', help = '')
-    parser.add_argument('--nruns', help = '')
-    parser.add_argument('--niterations', help = '')
+    parser.add_argument('--batch_size', help = 'Number of randomly generated pairs for training')
+    parser.add_argument('--testing_batch_size', help = 'Number of randomly generated pairs for testing')
+    parser.add_argument('--nruns', help = 'Number of independent runs')
+    parser.add_argument('--niterations', help = 'Number of training iterations')
 
-    parser.add_argument('--evaluate_every', help = '')
-    parser.add_argument('--max_from_class', help = 'max number of instacnes taken from each class')
+    parser.add_argument('--evaluate_every', help = 'Interval for testing')
+    parser.add_argument('--max_from_class', help = 'Max count of instances to use from each class')
 
     parser.add_argument('--comb_index', help = 'combinaion index')
 
     parser.add_argument('--train_with_all', type=str2bool, help='bool train and test with all classes')
     parser.add_argument('--test_vs_all', type=str2bool, help = '')
-    parser.add_argument('--save_best', type=str2bool, help = '')
-    
+    parser.add_argument('--save_best', type=str2bool, help = 'Save the best accuracy model')
+    parser.add_argument('--dataset_name', help = 'Specify the dataset name ')
+
     # Defaults 
-    path = '/home/hananhindy/Downloads/kddcup.data_10_percent_corrected'
-    network_id = 'kdd_0'
     evaluate_every = 10      # interval for evaluating 
     loss_every = 50         # interval for printing loss (iterations)
     batch_size = 250
     testing_batch_size = 250    #how mahy tasks to validate on?
-    niterations = 1001 
+    niterations = 1000 
     nruns = 10
     test_vs_all = False
     verbose = True
     current_combination_index = 0
-    max_from_class = 1200
     train_with_all = True
     save_best = False
     
     N_way = 2 # how many classes for testing one-shot tasks>
 
+    dataset_name = 'kdd'
+    
     # End Defaults
     
     args = parser.parse_args()  
 
+    if args.dataset_name != None:
+        dataset_name  = args.dataset_name
+        
+    if dataset_name == 'kdd':
+        path = '/home/hananhindy/Downloads/kddcup.data_10_percent_corrected'
+        network_id = 'kdd_0'
+        max_from_class = 1200
+    elif dataset_name == 'STA':
+        path = '/media/hananhindy/MyFiles/GitHub/phd/STA2018_DatasetPreprocessed/'
+        network_id = 'STA_0'
+        max_from_class = 642
+        
     if args.path != None:
         path = args.path
     
@@ -100,8 +112,9 @@ if __name__ == "__main__":
         
     if args.save_best != None:
         save_best = args.save_best
-        
-    dataset_handler = DatasetHandler(path, verbose)
+    
+
+    dataset_handler = DatasetHandler(path, dataset_name, verbose)
     all_classes = list(dataset_handler.get_classes())
     
     if verbose:
@@ -134,7 +147,7 @@ if __name__ == "__main__":
         
         wrapper = SiameseNet((dataset_handler.number_of_features,), network_id)
         
-        for i in range(1, niterations):
+        for i in range(1, niterations + 1):
             (inputs, targets) = dataset_handler.get_batch(batch_size, verbose)
             
             loss = wrapper.siamese_net.train_on_batch(inputs,targets)
