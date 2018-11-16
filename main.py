@@ -52,7 +52,7 @@ if __name__ == "__main__":
     test_vs_all = False
     verbose = True
     current_combination_index = 0
-    max_instances_from_class = 1200
+    max_from_class = 1200
     train_with_all = True
     save_best = False
     
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         current_combination_index = int(args.comb_index)
     
     if args.max_from_class != None:
-        max_instances_from_class = int(args.max_from_class)     
+        max_from_class = int(args.max_from_class)     
     
     if args.train_with_all != None:
         train_with_all = args.train_with_all
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         training_categories = all_conbinations[current_combination_index]
         testing_categories =  list(set(all_classes) - set(training_categories))
 
-    dataset_handler.encode_split(training_categories, testing_categories, max_instances_from_class, verbose)
+    dataset_handler.encode_split(training_categories, testing_categories, max_from_class, verbose)
     
     if verbose:
         print('!Starting!')
