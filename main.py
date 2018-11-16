@@ -52,7 +52,7 @@ if __name__ == "__main__":
     test_vs_all = False
     verbose = True
     current_combination_index = 0
-    max_instances_from_class = -1
+    max_instances_from_class = 1200
     train_with_all = True
     save_best = False
     
