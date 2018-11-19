@@ -223,7 +223,7 @@ class DatasetHandler:
             n_classes = np.size(self.testing_categories)
             true_category_index = rng.choice(range(n_classes),size=(1,),replace=False)       
              
-            true_category = self.testing_categories[true_category_index]
+            true_category = self.testing_categories[true_category_index[0]]
             ex1, ex2 = rng.choice(self.testing_instances_count[true_category],replace=False,size=(2,))
             
             training_count = np.size(self.training_categories)            
@@ -250,7 +250,7 @@ class DatasetHandler:
             support_set = np.zeros((training_count+1, self.number_of_features))
             
             for i in range(training_count):
-                current_category = self.training_classes[i]
+                current_category = self.training_categories[i]
                 index = rng.randint(0, self.training_instances_count[current_category])
                 support_set[i,:] = self.training_dataset[current_category][index, :]                
         
