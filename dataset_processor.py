@@ -71,7 +71,7 @@ class DatasetHandler:
             temp = np.unique(self.dataset[:, 42])
             temp[0], temp[1] = temp[1], temp[0]
         elif self.dataset_name == 'STA':
-            temp = [*self.dataset_dictionary.keys]
+            temp = [*self.dataset_dictionary.keys()]
         return temp
     
     def encode_split(self, training_categories, testing_categories, max_instances_count = -1, verbose = True):
@@ -133,9 +133,13 @@ class DatasetHandler:
                 
                 self.testing_dataset[testing] = self.dataset_features[self.dataset[:, 42] == testing , :][0:temp_size, :]
                 self.testing_instances_count[testing] = temp_size
-                
-        self.number_of_features = np.size(self.dataset_features, axis = 1)
-        del self.dataset
+        
+        if self.dataset_name == 'kdd':     
+            self.number_of_features = np.size(self.dataset_features, axis = 1)
+            del self.dataset
+        else:
+            self.number_of_features = np.size(self.dataset_dictionary[training_categories[0]], axis = 1)
+
         
     def get_batch(self, batch_size, verbose):
         #"""Create batch of n pairs, half same class, half different class"""
