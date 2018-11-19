@@ -5,13 +5,20 @@ This repository builds, trains and tests Siamese Network model.
 ## Used Datasets:
 - kddcup.data_10_percent [here](http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html)
 - STA2018 [here](https://github.com/elud074/STA2018)
+- SCADA [here](https://www.sciencedirect.com/science/article/pii/S2352340917303402)
+
+All processed files can be downloaded from [here](https://www.dropbox.com/sh/8y9jni9einfjnyd/AADcSqNs4cG0sQfy2Cias4tfa?dl=0)
 
 ## To run the script with the default parameters:
-The default is to run the script with 80:20 training : testing and all the categories are used in training and testing. 
-In this case, the network performance is evaluated based on learning from **small datasets**.
+The default of the script is to run with 80:20 training:testing on KDD dataset and all the categories are used in training and testing. 
 
-**kdd**: python main.py --path {}
-**STA2018**: python main.py --path {}--dataset_name STA 
+In this case, the network  is evaluated based on learning from **small datasets**.
+
+To run (remember to add the parameters as specified in the below tables as needed):
+- **kdd**: python main.py --path {}
+- **STA2018**: python main.py --path {} --dataset_name STA 
+- **SCADA**: python main.py --path {} --dataset_name SCADA 
+
 
 ## Script Arguments
 1. General Parameters
