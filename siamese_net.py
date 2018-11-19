@@ -13,7 +13,8 @@ from keras import backend as K
 from keras.optimizers import Adam
 
 class SiameseNet:
-    def __init__(self, input_shape, network_id = 'kdd_0'):
+    def __init__(self, input_shape, network_id = 'kdd_0', verbose = True):
+        
         self.left_input = Input(input_shape)
         self.right_input = Input(input_shape)
         self.convnet = Sequential()
@@ -115,3 +116,5 @@ class SiameseNet:
         self.optimizer = Adam(0.00006)
         self.siamese_net.compile(loss="binary_crossentropy",optimizer=self.optimizer)
         self.siamese_net.count_params()
+        if verbose:
+            print('Siamese Network Created\n')

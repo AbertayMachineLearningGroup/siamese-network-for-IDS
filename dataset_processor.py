@@ -275,8 +275,8 @@ class DatasetHandler:
         accuracy_not_in_training = (100.0*n_correct_not_training / testing_batch_size)
         
         if verbose:
-            print("Got an average of {}% one-shot learning accuracy vs all classes".format(accuracy))
-            print("Got an average of {}% one-shot learning accuracy predicted as new attack".format(accuracy_not_in_training))
+            print("Got an accuracy of {}% classifying new class vs all classes".format(accuracy))
+            print("Got an accuracy of {}% new class classified as new attack".format(accuracy_not_in_training))
         
         return accuracy, accuracy_not_in_training
     

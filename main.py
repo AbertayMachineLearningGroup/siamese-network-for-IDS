@@ -122,7 +122,7 @@ if __name__ == "__main__":
     all_classes = list(dataset_handler.get_classes())
     
     if verbose:
-        print('\bClasses are:\n{}'.format(all_classes))
+        print('\nClasses are:\n{}'.format(all_classes))
     
     if train_with_all:
         training_categories = all_classes
@@ -140,11 +140,16 @@ if __name__ == "__main__":
         print('!Starting!')
     
     with open(output_file_name, "a") as file_writer:
+        file_writer.write("Dataset, {}\n".format(dataset_name))
+        file_writer.write("Network ID, {}\n".format(network_id))
+        file_writer.write("Max from class, {}\n".format(max_from_class))
+        file_writer.write("Training Batch:Testing Batch, {}:{}\n".format(batch_size, testing_batch_size))
+        file_writer.write("No of iterations, {}\n".format(niterations))
         file_writer.write(", ".join(training_categories) + "\n")
-            
+    
     for run in range(nruns):
         if verbose:
-            print("Run {}".format(run))
+            print("Run #{}".format(run))
             
         best_accuracy = -1
         best_accuracy_partial = -1
