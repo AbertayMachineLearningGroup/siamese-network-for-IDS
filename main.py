@@ -68,11 +68,11 @@ if __name__ == "__main__":
         dataset_name  = args.dataset_name
         
     if dataset_name == 'kdd':
-        path = '/home/hananhindy/Downloads/kddcup.data_10_percent_corrected'
+        path = 'DatasetProcessedFiles/kddcup.data_10_percent_corrected'
         network_id = 'kdd_0'
         max_from_class = 1200
     elif dataset_name == 'STA':
-        path = '/media/hananhindy/MyFiles/GitHub/phd/STA2018_DatasetPreprocessed/'
+        path = 'DatasetProcessedFiles/STA2018_DatasetPreprocessed/'
         network_id = 'STA_0'
         max_from_class = 642
         
