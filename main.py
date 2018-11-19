@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_vs_all', type=str2bool, help = '')
     parser.add_argument('--save_best', type=str2bool, help = 'Save the best accuracy model')
     parser.add_argument('--dataset_name', help = 'Specify the dataset name ')
+    parser.add_argument('--output', help = 'Specify the output file name ')
 
     # Defaults 
     evaluate_every = 10      # interval for evaluating 
@@ -53,6 +54,7 @@ if __name__ == "__main__":
     current_combination_index = 0
     train_with_all = True
     save_best = False
+    output_file_name = 'Result.csv'
     
     N_way = 2 # how many classes for testing one-shot tasks>
 
@@ -113,6 +115,8 @@ if __name__ == "__main__":
     if args.save_best != None:
         save_best = args.save_best
     
+    if args.output != None:
+        output_file_name = args.output
 
     dataset_handler = DatasetHandler(path, dataset_name, verbose)
     all_classes = list(dataset_handler.get_classes())
@@ -135,7 +139,7 @@ if __name__ == "__main__":
     if verbose:
         print('!Starting!')
     
-    with open('Results.csv', "a") as file_writer:
+    with open(output_file_name, "a") as file_writer:
         file_writer.write(", ".join(training_categories) + "\n")
             
     for run in range(nruns):
@@ -167,6 +171,6 @@ if __name__ == "__main__":
                 if test_vs_all and val_acc_partial >= best_accuracy_partial:
                     best_accuracy_partial = val_acc_partial
         
-        with open('Results.csv', "a") as file_writer:
+        with open(output_file_name, "a") as file_writer:
             file_writer.write(str(best_accuracy) + ',' + str(best_accuracy_partial) + "\n")
                                 

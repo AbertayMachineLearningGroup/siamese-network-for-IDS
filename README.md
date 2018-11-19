@@ -29,6 +29,7 @@ In this case, the network performance is evaluated based on learning from **smal
 | --max_from_class | Max count of instances to use from each class | **kdd**: 1200 <br> **STA**: 642 ||
 | --network_id   | Siamese Network Architecture          | kdd_0 <br> STA_0 | kdd_0 : 95, 70, 47, 23, 5 <br> kdd_1 : 98, 79, 59, 39, 20, 5 <br> kdd_2: 101, 84, 67, 51, 24, 17, 5 <br> kdd_3: 103, 89, 74, 59, 44, 30, 15, 5 <br> STA_0: 510, 450, 390, 330, 270, 210, 150, 90, 30, 3 <br> STA_1: 480, 360, 240, 120, 3 <br> STA_2: 500, 400, 300, 200, 100, 3 <br> STA_3: 514, 428, 342, 257, 171, 86, 3 <br> STA_4: 525, 450, 375, 300, 225, 150, 75, 3 <br> STA_5 533, 467, 400, 333, 267, 200, 133, 65, 3 | 
 | --save_best | Save the best accuracy model | False || 
+| --output  | The output file name | Result.csv ||
 
 <br>
 
