@@ -75,6 +75,11 @@ if __name__ == "__main__":
         path = 'DatasetProcessedFiles/STA2018_DatasetPreprocessed/'
         network_id = 'STA_0'
         max_from_class = 642
+    elif dataset_name == 'SCADA':
+        path = 'DatasetProcessedFiles/SCADA_dataset_processed.csv'
+        network_id = 'SCADA_0'
+        max_from_class = 157   
+        testing_batch_size = 100
         
     if args.path != None:
         path = args.path
@@ -154,7 +159,7 @@ if __name__ == "__main__":
         best_accuracy = -1
         best_accuracy_partial = -1
         
-        wrapper = SiameseNet((dataset_handler.number_of_features,), network_id)
+        wrapper = SiameseNet((dataset_handler.number_of_features,), network_id, verbose)
         
         for i in range(1, niterations + 1):
             (inputs, targets) = dataset_handler.get_batch(batch_size, verbose)
@@ -167,7 +172,10 @@ if __name__ == "__main__":
                 if test_vs_all:
                     val_acc, val_acc_partial = dataset_handler.test_oneshot_new_classes_vs_all(wrapper.siamese_net, testing_batch_size, verbose)
                 else:
-                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, testing_batch_size, len(dataset_handler.testing_categories), verbose)   
+                    testing_validation_windows = len(dataset_handler.testing_categories)
+                    if dataset_name == 'SCADA':
+                        testing_validation_windows = 5
+                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, testing_batch_size, testing_validation_windows, verbose)   
                 
                 if val_acc >= best_accuracy:
                     if save_best:

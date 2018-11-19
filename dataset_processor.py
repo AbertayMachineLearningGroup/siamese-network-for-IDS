@@ -30,7 +30,9 @@ class DatasetHandler:
            self.dataset_dictionary['normal'] = pd.read_csv(normal_path, header = None).values
            self.dataset_dictionary['dos'] = pd.read_csv(dos_path, header = None).values
            self.dataset_dictionary['ddos'] = pd.read_csv(ddos_path, header = None).values
-
+        elif dataset_name == 'SCADA':
+           self.dataset = pd.read_csv(path)
+           self.dataset = self.dataset.dropna().values
     
     def add_kdd_main_classes(self, verbose):
         base_classes_map = {}
@@ -72,6 +74,10 @@ class DatasetHandler:
             temp[0], temp[1] = temp[1], temp[0]
         elif self.dataset_name == 'STA':
             temp = [*self.dataset_dictionary.keys()]
+        elif self.dataset_name == 'SCADA':
+            temp = np.unique(self.dataset[:, 12])
+            temp[0], temp[6] = temp[6], temp[0]
+
         return temp
     
     def encode_split(self, training_categories, testing_categories, max_instances_count = -1, verbose = True):
@@ -100,11 +106,13 @@ class DatasetHandler:
         if training_categories == testing_categories:
             print('\nTraining:Testing 80%:20%\n')
             for category in training_categories:
-                if self.dataset_name == 'kdd':
-                    temp = self.dataset_features[self.dataset[:, 42] == category , :]
-                elif self.dataset_name == 'STA':
+                if self.dataset_name == 'STA':
                     temp = self.dataset_dictionary[category]
-                    
+                elif self.dataset_name == 'kdd':
+                    temp = self.dataset_features[self.dataset[:, 42] == category , :]
+                elif self.dataset_name == 'SCADA':
+                    temp = self.dataset[self.dataset[:, 12] == category, 0: 10]
+                             
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)
@@ -116,26 +124,41 @@ class DatasetHandler:
                 self.testing_instances_count[category] = temp_size - testing_start_index
                 
         else:
+            if self.dataset_name == 'STA':
+                print('ERROR! Cannot apply this to STA dataset')
+                return
+            
             for training in training_categories:
-                temp = self.dataset_features[self.dataset[:, 42] == training , :]
+                if self.dataset_name == 'kdd':
+                    temp = self.dataset_features[self.dataset[:, 42] == training , :]
+                elif self.dataset_name == 'SCADA':
+                    temp = self.dataset[self.dataset[:, 12] == training , 0: 10]
+
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)
                 
-                self.training_dataset[training] = self.dataset_features[self.dataset[:, 42] == training , :][0:temp_size, :]
+                self.training_dataset[training] = temp[0:temp_size, :]
                 self.training_instances_count[training] = temp_size
             
             for testing in testing_categories:
-                temp = self.dataset_features[self.dataset[:, 42] == testing , :]
+                if self.dataset_name == 'kdd':
+                    temp = self.dataset_features[self.dataset[:, 42] == testing , :]
+                elif self.dataset_name == 'SCADA':
+                    temp = self.dataset[self.dataset[:, 12] == testing , 0: 10]
+                    
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)      
                 
-                self.testing_dataset[testing] = self.dataset_features[self.dataset[:, 42] == testing , :][0:temp_size, :]
+                self.testing_dataset[testing] = temp[0:temp_size, :]
                 self.testing_instances_count[testing] = temp_size
         
         if self.dataset_name == 'kdd':     
             self.number_of_features = np.size(self.dataset_features, axis = 1)
+            del self.dataset
+        elif self.dataset_name == 'SCADA':     
+            self.number_of_features = 10
             del self.dataset
         else:
             self.number_of_features = np.size(self.dataset_dictionary[training_categories[0]], axis = 1)
