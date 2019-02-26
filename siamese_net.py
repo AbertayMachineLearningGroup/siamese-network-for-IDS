@@ -103,6 +103,21 @@ class SiameseNet:
         elif network_id == 'SCADA_0':
             self.convnet.add(Dense(units = 20, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 14, kernel_initializer = 'uniform', activation = 'relu'))
+        elif network_id == 'SCADA_1':
+            self.convnet.add(Dense(units = 20, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dense(units = 10, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 14, kernel_initializer = 'uniform', activation = 'relu'))
+        elif network_id == 'SCADA_2':
+            self.convnet.add(Dense(units = 20, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dense(units = 15, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 10, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 14, kernel_initializer = 'uniform', activation = 'relu'))
+        elif network_id == 'SCADA_3':
+            self.convnet.add(Dense(units = 20, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dense(units = 15, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 10, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 5, kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 14, kernel_initializer = 'uniform', activation = 'relu'))
             
         #call the convnet Sequential model on each of the input tensors so params will be shared
         self.encoded_l = self.convnet(self.left_input)
