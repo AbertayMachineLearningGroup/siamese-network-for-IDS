@@ -49,7 +49,7 @@ class SiameseNet:
             self.convnet.add(Dense(units = 30, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 15, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 5, kernel_initializer = 'uniform', activation = 'relu'))       
-        elif network_id == 'STA_0':
+        elif network_id == 'STA_0' or network_id == 'STA_A4':
             self.convnet.add(Dense(units = 510, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 450, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 390, kernel_initializer = 'uniform', activation = 'relu'))
@@ -60,20 +60,20 @@ class SiameseNet:
             self.convnet.add(Dense(units = 90, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 30, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 3, kernel_initializer = 'uniform', activation = 'relu'))
-        elif network_id == 'STA_1':
+        elif network_id == 'STA_1' or network_id == 'STA_A5':
             self.convnet.add(Dense(units = 480, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 360, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 240, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 120, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 3, kernel_initializer = 'uniform', activation = 'relu'))
-        elif network_id == 'STA_2':
+        elif network_id == 'STA_2' or network_id == 'STA_A6':
             self.convnet.add(Dense(units = 500, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 400, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 300, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 200, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 100, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 3, kernel_initializer = 'uniform', activation = 'relu'))
-        elif network_id == 'STA_3':
+        elif network_id == 'STA_3' or network_id == 'STA_A1':
             self.convnet.add(Dense(units = 514, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 428, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 342, kernel_initializer = 'uniform', activation = 'relu'))
@@ -81,7 +81,7 @@ class SiameseNet:
             self.convnet.add(Dense(units = 171, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 86, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 3, kernel_initializer = 'uniform', activation = 'relu'))
-        elif network_id == 'STA_4':
+        elif network_id == 'STA_4' or network_id == 'STA_A2':
             self.convnet.add(Dense(units = 525, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 450, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 375, kernel_initializer = 'uniform', activation = 'relu'))
@@ -90,7 +90,7 @@ class SiameseNet:
             self.convnet.add(Dense(units = 150, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 75, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 3, kernel_initializer = 'uniform', activation = 'relu')) 
-        elif network_id == 'STA_5':        
+        elif network_id == 'STA_5' or network_id == 'STA_A3':        
             self.convnet.add(Dense(units = 533, kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dense(units = 467, kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dense(units = 400, kernel_initializer = 'uniform', activation = 'relu'))
