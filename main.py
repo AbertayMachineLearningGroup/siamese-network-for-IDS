@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_vs_all', type=str2bool, help = '')
     parser.add_argument('--save_best', type=str2bool, help = 'Save the best accuracy model')
     parser.add_argument('--dataset_name', help = 'Specify the dataset name ')
+    parser.add_argument('--k', help = 'Specify the k fold (max = 4)')
     parser.add_argument('--output', help = 'Specify the output file name ')
 
     # Defaults 
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     train_with_all = True
     save_best = False
     output_file_name = 'Result.csv'
-    
+    k_fold_number = 0
     N_way = 2 # how many classes for testing one-shot tasks>
 
     dataset_name = 'kdd'
@@ -120,12 +121,14 @@ if __name__ == "__main__":
     if args.save_best != None:
         save_best = args.save_best
     
+    if args.k != None:
+        k_fold_number = int(args.k)
+    
     if args.output != None:
         output_file_name = args.output
 
     dataset_handler = DatasetHandler(path, dataset_name, verbose)
     all_classes = list(dataset_handler.get_classes())
-    
     if verbose:
         print('\nClasses are:\n{}'.format(all_classes))
     
@@ -139,7 +142,7 @@ if __name__ == "__main__":
         training_categories = all_conbinations[current_combination_index]
         testing_categories =  list(set(all_classes) - set(training_categories))
 
-    dataset_handler.encode_split(training_categories, testing_categories, max_from_class, verbose)
+    dataset_handler.encode_split(training_categories, testing_categories, max_from_class, k_fold_number, verbose)
     
     if verbose:
         print('!Starting!')
@@ -150,6 +153,7 @@ if __name__ == "__main__":
         file_writer.write("Max from class, {}\n".format(max_from_class))
         file_writer.write("Training Batch:Testing Batch, {}:{}\n".format(batch_size, testing_batch_size))
         file_writer.write("No of iterations, {}\n".format(niterations))
+        file_writer.write("k =, {}\n".format(k_fold_number))
         file_writer.write(", ".join(training_categories) + "\n")
     
     for run in range(nruns):

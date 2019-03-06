@@ -80,7 +80,7 @@ class DatasetHandler:
 
         return temp
     
-    def encode_split(self, training_categories, testing_categories, max_instances_count = -1, verbose = True):
+    def encode_split(self, training_categories, testing_categories, max_instances_count = -1, k_fold = 0, verbose = True):
         self.training_categories = training_categories
         self.testing_categories = testing_categories
         
@@ -116,13 +116,14 @@ class DatasetHandler:
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)
-                testing_start_index = int(0.8 * temp_size)
+                     
+                testing_start_index = int((1 - 0.2 * (k_fold + 1)) * temp_size)
+                testing_end_index = int(testing_start_index + (0.2 * temp_size))
                 
-                self.training_dataset[category] = temp[0:testing_start_index, :]
-                self.testing_dataset[category] = temp[testing_start_index:temp_size, :]
-                self.training_instances_count[category] = testing_start_index
-                self.testing_instances_count[category] = temp_size - testing_start_index
-                
+                self.training_dataset[category] = np.append(temp[0:testing_start_index, :], temp[testing_end_index: temp_size, :], axis = 0)
+                self.testing_dataset[category] = temp[testing_start_index:testing_end_index, :]
+                self.training_instances_count[category] = np.size(self.training_dataset[category], axis = 0)
+                self.testing_instances_count[category] = np.size(self.testing_dataset[category], axis = 0)                
         else:
             if self.dataset_name == 'STA':
                 print('ERROR! Cannot apply this to STA dataset')
