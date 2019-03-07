@@ -157,6 +157,7 @@ if __name__ == "__main__":
         file_writer.write(", ".join(training_categories) + "\n")
     
     for run in range(nruns):
+        loss_array = []
         if verbose:
             print("Run #{}".format(run))
             
@@ -169,6 +170,7 @@ if __name__ == "__main__":
             (inputs, targets) = dataset_handler.get_batch(batch_size, verbose)
             
             loss = wrapper.siamese_net.train_on_batch(inputs,targets)
+            loss_array.append(loss)
             if verbose and i % loss_every == 0:
                 print(loss)
                 
@@ -190,4 +192,5 @@ if __name__ == "__main__":
         
         with open(output_file_name, "a") as file_writer:
             file_writer.write(str(best_accuracy) + ',' + str(best_accuracy_partial) + "\n")
+            file_writer.write(",".join(map(str,loss_array)) + "\n")
                                 
