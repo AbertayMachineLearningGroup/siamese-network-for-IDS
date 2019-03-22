@@ -197,7 +197,7 @@ class DatasetHandler:
         return pairs, targets
 
         
-    def make_oneshot_task(self, testing_validation_windows):
+    def make_oneshot_task(self, testing_validation_windows, train_with_all):
         n_classes = np.size(self.testing_categories)
         chosen_classes = rng.choice(range(n_classes), size = (testing_validation_windows,),replace = False)       
          
@@ -209,10 +209,17 @@ class DatasetHandler:
         support_set = np.zeros((testing_validation_windows, self.number_of_features))
         
         for i in range(testing_validation_windows):
-            current_category = self.testing_categories[chosen_classes[i]]
-            index = rng.randint(0, self.testing_instances_count[current_category])
-            support_set[i, :] = self.testing_dataset[current_category][index, :]
-    
+            if train_with_all == False:
+                # Testing similarity testing vs testing
+                current_category = self.testing_categories[chosen_classes[i]]
+                index = rng.randint(0, self.testing_instances_count[current_category])
+                support_set[i, :] = self.testing_dataset[current_category][index, :]
+            else:
+                # Testing Classification testing vs training
+                current_category = self.training_categories[chosen_classes[i]]
+                index = rng.randint(0, self.training_instances_count[current_category])
+                support_set[i, :] = self.training_dataset[current_category][index, :]
+                
         support_set[0,:] = self.testing_dataset[true_category][ex2,:]
     
         support_set = support_set.reshape(testing_validation_windows, self.number_of_features)
@@ -225,14 +232,14 @@ class DatasetHandler:
         return pairs, targets 
 
 
-    def test_oneshot(self, model, testing_batch_size, testing_validation_windows, verbose):
+    def test_oneshot(self, model, testing_batch_size, testing_validation_windows, train_with_all, verbose):
         n_correct = 0
         
         if verbose:
             print("\nEvaluating model on {} random {} way one-shot learning tasks ...".format(testing_batch_size, testing_validation_windows))
             
         for i in range(testing_batch_size):
-            inputs, targets = self.make_oneshot_task(testing_validation_windows)
+            inputs, targets = self.make_oneshot_task(testing_validation_windows, train_with_all)
             probs = model.predict(inputs)
             if np.argmax(probs) == np.argmax(targets):
                 n_correct+=1

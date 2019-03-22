@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_name', help = 'Specify the dataset name ')
     parser.add_argument('--k', help = 'Specify the k fold (max = 4)')
     parser.add_argument('--output', help = 'Specify the output file name ')
+    parser.add_argument('--print_loss', type = str2bool, help = 'If true, loss will be appended to the output file')
 
     # Defaults 
     evaluate_every = 10      # interval for evaluating 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     output_file_name = 'Result.csv'
     k_fold_number = 0
     N_way = 2 # how many classes for testing one-shot tasks>
-
+    print_loss = False
     dataset_name = 'kdd'
     
     # End Defaults
@@ -126,6 +127,9 @@ if __name__ == "__main__":
     
     if args.output != None:
         output_file_name = args.output
+    
+    if args.print_loss != None:
+        print_loss = args.print_loss
 
     dataset_handler = DatasetHandler(path, dataset_name, verbose)
     all_classes = list(dataset_handler.get_classes())
@@ -157,7 +161,9 @@ if __name__ == "__main__":
         file_writer.write(", ".join(training_categories) + "\n")
     
     for run in range(nruns):
-        loss_array = []
+        if print_loss:
+            loss_array = []
+            
         if verbose:
             print("Run #{}".format(run))
             
@@ -170,7 +176,9 @@ if __name__ == "__main__":
             (inputs, targets) = dataset_handler.get_batch(batch_size, verbose)
             
             loss = wrapper.siamese_net.train_on_batch(inputs,targets)
-            loss_array.append(loss)
+            if print_loss:
+                loss_array.append(loss) 
+                
             if verbose and i % loss_every == 0:
                 print(loss)
                 
@@ -181,7 +189,7 @@ if __name__ == "__main__":
                     testing_validation_windows = len(dataset_handler.testing_categories)
                     if dataset_name == 'SCADA':
                         testing_validation_windows = 5
-                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, testing_batch_size, testing_validation_windows, verbose)   
+                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, testing_batch_size, testing_validation_windows, train_with_all, verbose)   
                 
                 if val_acc >= best_accuracy:
                     if save_best:
@@ -192,5 +200,6 @@ if __name__ == "__main__":
         
         with open(output_file_name, "a") as file_writer:
             file_writer.write(str(best_accuracy) + ',' + str(best_accuracy_partial) + "\n")
-            file_writer.write(",".join(map(str,loss_array)) + "\n")
+            if print_loss:
+                file_writer.write(",".join(map(str,loss_array)) + "\n")
                                 
