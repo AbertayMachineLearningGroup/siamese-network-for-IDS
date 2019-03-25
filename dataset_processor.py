@@ -219,8 +219,8 @@ class DatasetHandler:
                 current_category = self.training_categories[chosen_classes[i]]
                 index = rng.randint(0, self.training_instances_count[current_category])
                 support_set[i, :] = self.training_dataset[current_category][index, :]
-                
-        support_set[0,:] = self.testing_dataset[true_category][ex2,:]
+        
+        #support_set[0,:] = self.testing_dataset[true_category][ex2,:]
     
         support_set = support_set.reshape(testing_validation_windows, self.number_of_features)
         targets = np.zeros((testing_validation_windows,))
