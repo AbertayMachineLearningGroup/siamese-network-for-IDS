@@ -5,201 +5,117 @@ Created on Thu Nov 15 12:19:17 2018
 
 @author: hananhindy
 """
-import argparse
 import itertools
 from dataset_processor import DatasetHandler
 from siamese_net import SiameseNet
-
-# Helper Functions
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-# End Helper Functions
+from args_handler import Arguments
+import csv
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--verbose', type = str2bool, help = 'If true, prints will be displayed')
-    parser.add_argument('--path', help = 'Path of the dataset csv or files directory')
-    parser.add_argument('--network_id', help = 'Siamese Network ID ')
-    parser.add_argument('--batch_size', help = 'Number of randomly generated pairs for training')
-    parser.add_argument('--testing_batch_size', help = 'Number of randomly generated pairs for testing')
-    parser.add_argument('--nruns', help = 'Number of independent runs')
-    parser.add_argument('--niterations', help = 'Number of training iterations')
-
-    parser.add_argument('--evaluate_every', help = 'Interval for testing')
-    parser.add_argument('--max_from_class', help = 'Max count of instances to use from each class')
-
-    parser.add_argument('--comb_index', help = 'combinaion index')
-
-    parser.add_argument('--train_with_all', type=str2bool, help='bool train and test with all classes')
-    parser.add_argument('--test_vs_all', type=str2bool, help = '')
-    parser.add_argument('--save_best', type=str2bool, help = 'Save the best accuracy model')
-    parser.add_argument('--dataset_name', help = 'Specify the dataset name ')
-    parser.add_argument('--k', help = 'Specify the k fold (max = 4)')
-    parser.add_argument('--output', help = 'Specify the output file name ')
-    parser.add_argument('--print_loss', type = str2bool, help = 'If true, loss will be appended to the output file')
-
-    # Defaults 
-    evaluate_every = 10      # interval for evaluating 
-    loss_every = 50         # interval for printing loss (iterations)
-    batch_size = 250
-    testing_batch_size = 250    #how mahy tasks to validate on?
-    niterations = 1000 
-    nruns = 10
-    test_vs_all = False
-    verbose = True
-    current_combination_index = 0
-    train_with_all = True
-    save_best = False
-    output_file_name = 'Result.csv'
-    k_fold_number = 0
-    N_way = 2 # how many classes for testing one-shot tasks>
-    print_loss = False
-    dataset_name = 'kdd'
+    args = Arguments()
+    args.parse()
     
-    # End Defaults
+    dataset_handler = DatasetHandler(args.path, args.dataset_name, args.verbose)
     
-    args = parser.parse_args()  
-
-    if args.dataset_name != None:
-        dataset_name  = args.dataset_name
-        
-    if dataset_name == 'kdd':
-        path = 'DatasetProcessedFiles/kddcup.data_10_percent_corrected'
-        network_id = 'kdd_0'
-        max_from_class = 1200
-    elif dataset_name == 'STA':
-        path = 'DatasetProcessedFiles/STA2018_DatasetPreprocessed/'
-        network_id = 'STA_0'
-        max_from_class = 642
-    elif dataset_name == 'SCADA':
-        path = 'DatasetProcessedFiles/SCADA_dataset_processed.csv'
-        network_id = 'SCADA_0'
-        max_from_class = 157   
-        testing_batch_size = 100
-        
-    if args.path != None:
-        path = args.path
-    
-    if args.network_id != None:
-        network_id = args.network_id
-        
-    if args.verbose != None:
-        verbose = args.verbose        
-        
-    if args.comb_index != None:
-        current_combination_index = int(args.comb_index)
-    
-    if args.max_from_class != None:
-        max_from_class = int(args.max_from_class)     
-    
-    if args.train_with_all != None:
-        train_with_all = args.train_with_all
-    
-    if args.evaluate_every != None:
-        evaluate_every = int(args.evaluate_every)
-    
-    if args.batch_size != None:
-        batch_size = int(batch_size)
-    
-    if args.testing_batch_size != None:
-        testing_batch_size = int(args.testing_batch_size)
-        
-    if args.niterations != None:
-        niterations = int(args.niterations)
-    
-    if args.nruns != None:
-        nruns = int(args.nruns)
-    
-    if args.test_vs_all != None:
-        test_vs_all = args.test_vs_all
-        
-    if args.save_best != None:
-        save_best = args.save_best
-    
-    if args.k != None:
-        k_fold_number = int(args.k)
-    
-    if args.output != None:
-        output_file_name = args.output
-    
-    if args.print_loss != None:
-        print_loss = args.print_loss
-
-    dataset_handler = DatasetHandler(path, dataset_name, verbose)
     all_classes = list(dataset_handler.get_classes())
-    if verbose:
+    if args.verbose:
         print('\nClasses are:\n{}'.format(all_classes))
     
-    if train_with_all:
+    if args.train_with_all:
         training_categories = all_classes
         testing_categories = all_classes
     else:
-        number_of_training = 3
-        all_conbinations = list(itertools.combinations(all_classes, number_of_training))
+        all_conbinations = list(itertools.combinations(all_classes, args.number_of_training_categories))
     
-        training_categories = all_conbinations[current_combination_index]
+        training_categories = all_conbinations[args.comb_index]
         testing_categories =  list(set(all_classes) - set(training_categories))
 
-    dataset_handler.encode_split(training_categories, testing_categories, max_from_class, k_fold_number, verbose)
+    dataset_handler.encode_split(training_categories, testing_categories, args.max_from_class, args.k_fold_number, args.verbose)
     
-    if verbose:
+    if args.number_of_reps > 0:
+        dataset_handler.generate_training_representitives(args.number_of_reps, args.verbose)
+    
+    if args.verbose:
         print('!Starting!')
     
-    with open(output_file_name, "a") as file_writer:
-        file_writer.write("Dataset, {}\n".format(dataset_name))
-        file_writer.write("Network ID, {}\n".format(network_id))
-        file_writer.write("Max from class, {}\n".format(max_from_class))
-        file_writer.write("Training Batch:Testing Batch, {}:{}\n".format(batch_size, testing_batch_size))
-        file_writer.write("No of iterations, {}\n".format(niterations))
-        file_writer.write("k =, {}\n".format(k_fold_number))
+    with open(args.output_file_name, "a") as file_writer:
+        file_writer.write("Dataset, {}\n".format(args.dataset_name))
+        file_writer.write("Network ID, {}\n".format(args.network_id))
+        file_writer.write("Max from class, {}\n".format(args.max_from_class))
+        file_writer.write("Training Batch:Testing Batch, {}:{}\n".format(args.batch_size, args.testing_batch_size))
+        file_writer.write("No of iterations, {}\n".format(args.niterations))
+        file_writer.write("k =, {}\n".format(args.k_fold_number))
+        file_writer.write("n_reps =, {}, reps_from_all = {}\n".format(args.number_of_reps, args.reps_from_all))
+        file_writer.write("acc_not_in_training, acc_added_labels\n")
         file_writer.write(", ".join(training_categories) + "\n")
     
-    for run in range(nruns):
-        if print_loss:
+    for run in range(args.nruns):
+        if args.print_loss:
             loss_array = []
             
-        if verbose:
+        if args.verbose:
             print("Run #{}".format(run))
             
         best_accuracy = -1
         best_accuracy_partial = -1
+        best_accuracy_labels = -1
         
-        wrapper = SiameseNet((dataset_handler.number_of_features,), network_id, verbose)
+        best_threashold_acc = {}
         
-        for i in range(1, niterations + 1):
-            (inputs, targets) = dataset_handler.get_batch(batch_size, verbose)
+        wrapper = SiameseNet((dataset_handler.number_of_features,), args.network_id, args.verbose)
+        
+        for i in range(1, args.niterations + 1):
+            (inputs, targets) = dataset_handler.get_batch(args.batch_size, args.verbose)
             
             loss = wrapper.siamese_net.train_on_batch(inputs,targets)
-            if print_loss:
-                loss_array.append(loss) 
+            
+            if i % args.loss_every == 0:
+                if args.print_loss:
+                    loss_array.append(loss) 
+                if args.verbose:
+                    print(loss)
                 
-            if verbose and i % loss_every == 0:
-                print(loss)
-                
-            if i % evaluate_every == 0:
-                if test_vs_all:
-                    val_acc, val_acc_partial = dataset_handler.test_oneshot_new_classes_vs_all(wrapper.siamese_net, testing_batch_size, verbose)
+            if i % args.evaluate_every == 0:
+                if args.is_add_labels:
+                    val_acc_threasholds, val_acc_labels =  dataset_handler.test_oneshot_adding_labels(wrapper.siamese_net, args.testing_batch_size, args.reps_from_all, args.verbose)
+                    val_acc = val_acc_threasholds[60]
+                    
+                elif args.test_vs_all:
+                    val_acc, val_acc_partial = dataset_handler.test_oneshot_new_classes_vs_all(wrapper.siamese_net, args.testing_batch_size, args.verbose)
                 else:
                     testing_validation_windows = len(dataset_handler.testing_categories)
-                    if dataset_name == 'SCADA':
-                        testing_validation_windows = 5
-                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, testing_batch_size, testing_validation_windows, train_with_all, verbose)   
+                    val_acc = dataset_handler.test_oneshot(wrapper.siamese_net, args.testing_batch_size, testing_validation_windows, args.train_with_all, args.verbose)   
                 
-                if val_acc >= best_accuracy:
-                    if save_best:
-                        wrapper.siamese_net.save('Best_Acc{}_{}'.format(i, val_acc))
-                    best_accuracy = val_acc
-                if test_vs_all and val_acc_partial >= best_accuracy_partial:
-                    best_accuracy_partial = val_acc_partial
-        
-        with open(output_file_name, "a") as file_writer:
-            file_writer.write(str(best_accuracy) + ',' + str(best_accuracy_partial) + "\n")
-            if print_loss:
+                if args.is_add_labels:
+                    if val_acc >= best_accuracy and val_acc_labels >= best_accuracy_labels:
+                        best_accuracy = val_acc
+                        best_accuracy_labels = val_acc_labels
+                        
+                        try:    
+                            best_threashold_acc = val_acc_threasholds
+                            best_accuracy_labels = val_acc_labels
+                        except NameError:
+                            print('Name Error 1')
+                else:
+                    if val_acc >= best_accuracy:
+                        best_accuracy = val_acc
+                        if args.save_best:
+                            wrapper.siamese_net.save('Best_Acc{}_{}'.format(i, val_acc))
+                            
+                    if args.test_vs_all and val_acc_partial >= best_accuracy_partial:
+                        best_accuracy_partial = val_acc_partial
+    
+        with open(args.output_file_name, "a") as file_writer:
+            if args.is_add_labels:
+                try:    
+                    w = csv.DictWriter(file_writer, best_threashold_acc.keys())
+                    w.writeheader()
+                    w.writerow(best_threashold_acc)
+                    file_writer.write('Labels, ' + str(best_accuracy_labels) + '\n\n')
+                except NameError:
+                    print('Name Error 2')
+            else:
+                file_writer.write(str(best_accuracy) + ',' + str(best_accuracy_partial) + "\n")
+
+            if args.print_loss:
                 file_writer.write(",".join(map(str,loss_array)) + "\n")
-                                
