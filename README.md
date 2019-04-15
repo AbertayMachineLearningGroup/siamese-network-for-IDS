@@ -51,6 +51,7 @@ To run (remember to add the parameters as specified in the below tables as neede
 | --test_vs_all   | If true, the testing classes are validated against training (zero-day detection) | False | Should be true if train with all is false to test one shot learning |
 
 3. Categories Representatives
+
 | Argument       | Usage         | Default       |  Values and notes          |
 | ---------------|:-------------:|:-------------:|:--------------------|
 | --number_of_reps | Number of representatives to use per category | 0  | No reps are used by default |
