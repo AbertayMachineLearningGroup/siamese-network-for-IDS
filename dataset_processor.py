@@ -175,7 +175,8 @@ class DatasetHandler:
             kmenas = KMeans(n_clusters=number_of_reps)
             kmenas.fit(self.training_dataset[category])
             self.training_reps[category] = kmenas.cluster_centers_
-        
+            
+       
     def get_batch(self, batch_size, verbose):
         #"""Create batch of n pairs, half same class, half different class"""
         #randomly sample several classes to use in the batch
@@ -309,7 +310,7 @@ class DatasetHandler:
         if verbose:
             print("Got an accuracy of {}% new class classified as new attack".format(accuracy_not_in_training_60))
         
-        return accuracy, accuracy_not_in_training_80 
+        return accuracy, accuracy_not_in_training_60 
     
             
     def test_oneshot_adding_labels(self, model, testing_batch_size, reps_from_all = False, verbose= False):
