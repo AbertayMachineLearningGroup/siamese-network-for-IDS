@@ -21,8 +21,9 @@ class Arguments:
         self.parser = argparse.ArgumentParser()
 
         self.verbose = False
-        self.batch_size = 250          #how many pairs to train on
-        self.testing_batch_size = 250           #how many testing instances to validate on
+        self.batch_size = 30000          #how many pairs to train on
+        self.validation_batch_size = 30000
+        self.testing_batch_size = 30000           #how many testing instances to validate on
         
         self.parser.add_argument('--verbose', type = str2bool, help = 'If true, prints will be displayed')
         self.parser.add_argument('--batch_size', help = 'Number of randomly generated pairs for training')
@@ -62,7 +63,7 @@ class Arguments:
         self.parser.add_argument('--nruns', help = 'Number of independent runs')
         self.parser.add_argument('--n_reps', help = 'Number of category representatives')
 
-        self.number_of_training_categories = 3
+        self.number_of_training_categories = 4
         self.comb_index = 0
         self.k_fold_number = 0
         
@@ -82,6 +83,9 @@ class Arguments:
         self.parser.add_argument('--output', help = 'Specify the output file name ')
         self.parser.add_argument('--print_loss', type = str2bool, help = 'If true, loss will be appended to the output file')
         self.parser.add_argument('--save_best', type=str2bool, help = 'Save the best accuracy model')
+
+        self.use_sub_batches = False
+        self.parser.add_argument('--use_sub_batches', type=str2bool, help = 'Use 3000 per batch')
 
         
     def parse(self):
@@ -129,6 +133,7 @@ class Arguments:
             self.number_of_training_categories = int(args.number_of_training_categories)
         if args.comb_index != None:
             self.comb_index = int(args.comb_index)
+            print(self.comb_index)
         if args.k != None:
             self.k_fold_number = int(args.k)    
     
@@ -143,6 +148,9 @@ class Arguments:
             self.print_loss = args.print_loss
         if args.save_best != None:
             self.save_best = args.save_best
+            
+        if args.use_sub_batches != None:
+            self.use_sub_batches = args.use_sub_batches
             
     
     def add_dataset_specific_defaults(self):
