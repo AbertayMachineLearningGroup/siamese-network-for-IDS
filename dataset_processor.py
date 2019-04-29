@@ -102,7 +102,8 @@ class DatasetHandler:
         self.testing_dataset = {}
         self.training_instances_count = {} 
         self.testing_instances_count = {} 
-        
+        self.dataset_all = {}
+        self.dataset_all_count = {}
         if verbose and max_instances_count != -1:
             print('! Restricting the numebr of instances from each class to {}'.format(max_instances_count))
         
@@ -122,11 +123,12 @@ class DatasetHandler:
                      
                 testing_start_index = int((1 - 0.2 * (k_fold + 1)) * temp_size)
                 testing_end_index = int(testing_start_index + (0.2 * temp_size))
-                
-                self.training_dataset[category] = np.append(temp[0:testing_start_index, :], temp[testing_end_index: temp_size, :], axis = 0)
-                self.testing_dataset[category] = temp[testing_start_index:testing_end_index, :]
-                self.training_instances_count[category] = np.size(self.training_dataset[category], axis = 0)
-                self.testing_instances_count[category] = np.size(self.testing_dataset[category], axis = 0)                
+                self.dataset_all[category] = temp
+                self.dataset_all_count[category] = np.size(temp, axis = 0)
+                #self.training_dataset[category] = np.append(temp[0:testing_start_index, :], temp[testing_end_index: temp_size, :], axis = 0)
+                #self.testing_dataset[category] = temp[testing_start_index:testing_end_index, :]
+                #self.training_instances_count[category] = np.size(self.training_dataset[category], axis = 0)
+                #self.testing_instances_count[category] = np.size(self.testing_dataset[category], axis = 0)                
         else:
             if self.dataset_name == 'STA':
                 print('ERROR! Cannot apply this to STA dataset')
@@ -142,6 +144,9 @@ class DatasetHandler:
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)
                 
+                self.dataset_all[training] = temp
+                self.dataset_all_count[training] = np.size(temp, axis = 0)
+                
                 self.training_dataset[training] = temp[0:temp_size, :]
                 self.training_instances_count[training] = temp_size
             
@@ -154,6 +159,9 @@ class DatasetHandler:
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)      
+                
+                self.dataset_all[testing] = temp
+                self.dataset_all_count[testing] = np.size(temp, axis = 0)
                 
                 self.testing_dataset[testing] = temp[0:temp_size, :]
                 self.testing_instances_count[testing] = temp_size
@@ -176,7 +184,216 @@ class DatasetHandler:
             kmenas.fit(self.training_dataset[category])
             self.training_reps[category] = kmenas.cluster_centers_
             
+    def generate_training_representitives_of_50_percent(self, number_of_reps, verbose = False):
+        self.training_reps = {};
+        self.number_of_reps = number_of_reps
+        for category in self.training_categories:
+            kmenas = KMeans(n_clusters=number_of_reps)
+            kmenas.fit(self.dataset_all[category][:self.dataset_all_count[category]//2, :])
+            self.training_reps[category] = kmenas.cluster_centers_
+            
+    def load_batch(self, batch_size, file_name):
+        pairs = [np.zeros((batch_size, self.number_of_features)) for i in range(2)]
+        targets = np.zeros((batch_size,))
+        temp_file = pd.read_csv(file_name, header=None).values
+        
+        for i in range(batch_size):
+            temp = temp_file[i, :]
+            pairs[0][i, :] = self.dataset_all[temp[0].strip()][int(temp[1]), :].reshape(self.number_of_features)
+            pairs[1][i, :] = self.dataset_all[temp[2].strip()][int(temp[3]), :].reshape(self.number_of_features)
+            targets[i] = temp[0].strip() != temp[2].strip()
+            
+        return pairs, targets
+
+    def evaluate_classisfication(self, file_name, model, testing_batch_size):
+        temp_file = pd.read_csv(file_name, header=None).values
+        n_correct = 0
+        n_correct_first_pair = 0
+        n_correct_variable_pairs = {}
+        n_correct_variable_pairs[5] = 0
+        n_correct_variable_pairs[10] = 0
+        n_correct_variable_pairs[15] = 0
+        n_correct_variable_pairs[20] = 0
+        n_correct_variable_pairs[25] = 0
+        
+        n_correct_voting = 0
+        
+        mis_classified = {}
+        
+        for i in range(testing_batch_size):
+            votes = np.zeros((5,1))
+            
+            temp_line = temp_file[i, :]
+            probs = np.zeros((5,1))
+            
+            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*5).reshape(5, self.number_of_features)
+
+            for mm in range(30):
+                temp = temp_line[2 + mm*10 :12 + mm*10]
+                support_set_1 = np.zeros((5, self.number_of_features)) 
+                #support_set_2 = np.zeros((5, self.number_of_features)) 
+                
+                targets = np.zeros((5,))   
+                support_set_1[0,:] = self.dataset_all[temp[0].strip()][int(temp[1]), :]
+                #support_set_2[0,:] = self.training_reps[temp[0].strip()][0,:]
+                targets[0] = temp_line[0].strip() != temp[0].strip()
+                
+                support_set_1[1,:] = self.dataset_all[temp[2].strip()][int(temp[3]), :]
+                #support_set_2[1,:] = self.training_reps[temp[2].strip()][0,:]
+                targets[1] = temp_line[0].strip() != temp[2].strip()
+                
+                support_set_1[2,:] = self.dataset_all[temp[4].strip()][int(temp[5]), :]
+                #support_set_2[2,:] = self.training_reps[temp[4].strip()][0,:]
+                targets[2] = temp_line[0].strip() != temp[4].strip()
+                
+                support_set_1[3,:] = self.dataset_all[temp[6].strip()][int(temp[7]), :]
+                #support_set_2[3,:] = self.training_reps[temp[6].strip()][0,:]
+                targets[3] = temp_line[0].strip() != temp[6].strip()
+                
+                support_set_1[4,:] = self.dataset_all[temp[8].strip()][int(temp[9]), :]
+                #support_set_2[4,:] = self.training_reps[temp[8].strip()][0,:]
+                targets[4] = temp_line[0].strip() != temp[8].strip()
+                
+                modes_probs = model.predict([test_pair,support_set_1])
+
+                votes[modes_probs == modes_probs[np.argmin(modes_probs)]] += 1
+                probs += modes_probs
+                #print(probs)
+                if mm == 0:
+                    if targets[np.argmin(probs)] == 0:
+                        n_correct_first_pair+=1
+            
+                if (mm + 1) in n_correct_variable_pairs:
+                    prob_temp = probs/(mm+1)
+                    if targets[np.argmin(prob_temp)] == 0:
+                        n_correct_variable_pairs[mm+1] += 1
+                    
+            probs/=30
+            #print(n_correct)
+#            if len(np.unique(probs)) != 5:
+#                print(probs)
+            
+            if probs[np.argmin(probs)] > 0.5:
+                print(probs)
+            if targets[np.argmax(votes)] == 0:
+                n_correct_voting += 1
+                
+            if targets[np.argmin(probs)] == 0:
+                n_correct+=1
+            else:
+                key = temp_line[0].strip() + '_' + str(np.argmin(probs))
+                if key not in mis_classified: 
+                    mis_classified[key] = 0
+
+                #print(probs[np.argmax(targets)])    
+                #print(probs[np.argmax(probs)])
+                mis_classified[key] += 1
+                
+            #probs = model.predict([test_pair,support_set_2])
+            #if targets[np.argmax(probs)] == 1:
+            #    n_correct_k_menas+=1
+        accuracy_pairs = {}
+        for key in n_correct_variable_pairs:
+            accuracy_pairs[key] = n_correct_variable_pairs[key]/testing_batch_size
+        
+        print(accuracy_pairs)
+        accuracy = (100.0*n_correct / testing_batch_size)
+        print("Got an accuracy of {}%".format(accuracy))
+        
+        accuracy_first_pair = (100.0*n_correct_first_pair / testing_batch_size)
+        print("Got an accuracy of {}% using first pair".format(accuracy_first_pair))
+        
+        accuracy_voting = (100.0*n_correct_voting / testing_batch_size)
+        
+        return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting
+    
+    def evaluate_zero_day_detection(self, file_name, model, testing_batch_size, zero_day_file):
+        temp_file = pd.read_csv(file_name, header=None).values
+        temo_zero_day_file = pd.read_csv(zero_day_file, header=None).values
+        
+        n_correct_not_training = {}
+        n_correct_not_normal = {}
+        n_corrent_labeled_any = 0
+        n_corrent_labeled_all = 0
+        n_corrent_labeled_one_pair = 0
+        n_corrent_labeled_avg_5 = 0
+        
+        accuracy = {}
+        accuracy_not_normal = {}
+        
+        thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+        for th in thresholds:
+            n_correct_not_training[th] = 0
+            n_correct_not_normal[th] = 0
        
+        mis_classified = {}
+        
+        for i in range(testing_batch_size):
+            temp_line = temp_file[i, :]
+            
+            zero_day_line = temo_zero_day_file[i,:]
+            
+            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*5).reshape(5, self.number_of_features)
+            support_set_zero_day = np.zeros((5, self.number_of_features)) 
+
+            for k in range(5):
+                support_set_zero_day[k,:] = self.dataset_all[temp_line[0].strip()][zero_day_line[k], :]
+            
+            zero_day_probs = model.predict([test_pair, support_set_zero_day])
+            
+            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*4).reshape(4, self.number_of_features)
+
+            for mm in range(1):
+                temp = temp_line[2 + mm*10 :10 + mm*10]
+                
+                support_set_1 = np.zeros((4, self.number_of_features)) 
+                support_set_1[0,:] = self.dataset_all[temp[0].strip()][int(temp[1]), :]                
+                support_set_1[1,:] = self.dataset_all[temp[2].strip()][int(temp[3]), :]                
+                support_set_1[2,:] = self.dataset_all[temp[4].strip()][int(temp[5]), :]
+                support_set_1[3,:] = self.dataset_all[temp[6].strip()][int(temp[7]), :]
+                
+                modes_probs = model.predict([test_pair,support_set_1])
+                for th in thresholds:
+                    if modes_probs[np.argmin(modes_probs)] > (th):
+                        n_correct_not_training[th] = n_correct_not_training[th] + 1
+                    if modes_probs[0] > (th):
+                        n_correct_not_normal[th] = n_correct_not_normal[th] + 1
+                        
+                if modes_probs[np.argmin(modes_probs)] < 0.05:
+                    key = str(np.argmin(modes_probs))
+                    if key not in mis_classified:
+                        mis_classified[key] = 0
+                    
+                    mis_classified[key] += 1
+                
+                if zero_day_probs[0] < modes_probs[np.argmin(modes_probs)]:
+                    n_corrent_labeled_one_pair += 1
+                
+                if any(i < modes_probs[np.argmin(modes_probs)] for i in zero_day_probs):
+                    n_corrent_labeled_any += 1
+                    
+                if all(i < modes_probs[np.argmin(modes_probs)] for i in zero_day_probs):
+                    n_corrent_labeled_all += 1    
+                 
+                if np.average(zero_day_probs) < modes_probs[np.argmin(modes_probs)]:
+                    n_corrent_labeled_avg_5 += 1
+        
+        for th in thresholds:
+            accuracy[th] = (100.0*n_correct_not_training[th] / testing_batch_size)
+            print("Got an accuracy of {}%".format(accuracy[th]))
+          
+            accuracy_not_normal[th] = (100.0*n_correct_not_normal[th] / testing_batch_size)
+            print("Got an accuracy of {}%".format(accuracy_not_normal[th]))
+        
+        acc_labeled_one_pair = n_corrent_labeled_one_pair*100/testing_batch_size
+        acc_labeled_any = n_corrent_labeled_any*100/testing_batch_size
+        acc_labeled_all = n_corrent_labeled_all*100/testing_batch_size
+        acc_labeled_average_5 = n_corrent_labeled_avg_5*100/testing_batch_size
+        
+        return accuracy, accuracy_not_normal, mis_classified, acc_labeled_one_pair, acc_labeled_any, acc_labeled_all, acc_labeled_average_5
+        
+
+            
     def get_batch(self, batch_size, verbose):
         #"""Create batch of n pairs, half same class, half different class"""
         #randomly sample several classes to use in the batch
@@ -205,6 +422,37 @@ class DatasetHandler:
             
             idx_2 = rng.randint(0, self.training_instances_count[class_2])
             pairs[1][i, :] = self.training_dataset[class_2][idx_2, :].reshape(self.number_of_features)
+    
+        return pairs, targets
+    
+    def get_validation_batch(self, batch_size, verbose):
+        #"""Create batch of n pairs, half same class, half different class"""
+        #randomly sample several classes to use in the batch
+        n_classes = np.size(self.testing_categories)
+        selected_classes = np.tile(rng.randint(low = 0, high = n_classes, size = int(batch_size/2)), 2)
+    
+        #initialize 2 empty arrays for the input image batch
+        pairs = [np.zeros((batch_size, self.number_of_features)) for i in range(2)]
+        
+        #initialize vector for the targets, and make one half of it '1's, so 2nd half of batch has same class
+        targets = np.zeros((batch_size,))
+        targets[batch_size//2:] = 1
+    
+        for i in range(batch_size):
+            current_class = self.testing_categories[selected_classes[i]]
+            
+            idx_1 = rng.randint(0, self.testing_instances_count[current_class])
+            pairs[0][i, :] = self.testing_dataset[current_class][idx_1, :].reshape(self.number_of_features)
+            
+            if i >= batch_size // 2:
+                class_2 = current_class  
+            else: 
+                #add a random number to the category modulo n classes to ensure 2nd image has
+                # ..different category
+                class_2 = self.testing_categories[(selected_classes[i] + rng.randint(1, n_classes)) % n_classes]
+            
+            idx_2 = rng.randint(0, self.testing_instances_count[class_2])
+            pairs[1][i, :] = self.testing_dataset[class_2][idx_2, :].reshape(self.number_of_features)
     
         return pairs, targets
 
@@ -301,7 +549,7 @@ class DatasetHandler:
             probs = model.predict(pairs)
             
             #Check if its in the training set 
-            if np.argmax(probs) < 0.6:
+            if probs[np.argmax(probs)] < 0.6:
                 n_correct_not_training_th_60 += 1
             
         accuracy_not_in_training_60 = (100.0*n_correct_not_training_th_60 / testing_batch_size)
@@ -369,9 +617,9 @@ class DatasetHandler:
             probs = model.predict(pairs)
             
             #Check if its in the training set 
-            if np.argmax(probs[0: sub_pair_count]) < 0.6:
+            if probs[np.argmax(probs[0: sub_pair_count])] < 0.6:
                 for th in thresholds:
-                    if  np.argmax(probs[0: sub_pair_count]) < th:
+                    if  probs[p.argmax(probs[0: sub_pair_count])] < th:
                         n_correct_not_training[th] = n_correct_not_training[th] + 1
                 if len(new_labels.keys()) > 0:
                     correct_prediction = np.argmax(probs) 
