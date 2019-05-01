@@ -61,24 +61,25 @@ class SiameseNet:
         self.siamese_net = Model(inputs=[self.left_input,self.right_input],outputs=self.L1_distance)
         
         #self.optimizer = Adam(0.00006)
-        self.optimizer = Adam(lr)
-        #self.optimizer = RMSprop()
-        self.siamese_net.compile(loss="binary_crossentropy", optimizer=self.optimizer)#metrics
+        #self.optimizer = Adam(lr)
+        self.optimizer = RMSprop()
+        #self.siamese_net.compile(loss="binary_crossentropy", optimizer=self.optimizer)#metrics
+        self.siamese_net.compile(loss=self.contrastive_loss, optimizer=self.optimizer, metrics=[self.accuracy])
         #metrics=['binary_accuracy'],
         #self.siamese_net.summary()
         #self.siamese_net.count_params()
         if verbose:
             print('Siamese Network Created\n')
             
-    def b_init(self, shape,name=None):
-        """Initialize bias as in paper"""
-        values=rng.normal(loc=0.5,scale=1e-2,size=shape)
-        return K.variable(values,name=name)
-    
-    def W_init(self, shape,name=None):
-        """Initialize weights as in paper"""
-        values = rng.normal(loc=0,scale=1e-2,size=shape)
-        return K.variable(values,name=name)
+#    def b_init(self, shape,name=None):
+#        """Initialize bias as in paper"""
+#        values=rng.normal(loc=0.5,scale=1e-2,size=shape)
+#        return K.variable(values,name=name)
+#    
+#    def W_init(self, shape,name=None):
+#        """Initialize weights as in paper"""
+#        values = rng.normal(loc=0,scale=1e-2,size=shape)
+#        return K.variable(values,name=name)
     
     def euclidean_distance(self, vects):
         x, y = vects
@@ -88,3 +89,18 @@ class SiameseNet:
     def eucl_dist_output_shape(self, shapes):
         shape1, shape2 = shapes
         return (shape1[0], 1)
+
+    def contrastive_loss(self, y_true, y_pred):
+        '''Contrastive loss from Hadsell-et-al.'06
+        http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+        '''
+        margin = 1
+        sqaure_pred = K.square(y_pred)
+        margin_square = K.square(K.maximum(margin - y_pred, 0))
+        return K.mean(y_true * sqaure_pred + (1 - y_true) * margin_square)
+    
+    def accuracy(self, y_true, y_pred):
+        '''Compute classification accuracy with a fixed threshold on distances.
+        '''
+        return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
+    

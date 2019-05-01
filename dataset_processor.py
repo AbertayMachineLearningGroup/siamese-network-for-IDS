@@ -201,7 +201,7 @@ class DatasetHandler:
             temp = temp_file[i, :]
             pairs[0][i, :] = self.dataset_all[temp[0].strip()][int(temp[1]), :].reshape(self.number_of_features)
             pairs[1][i, :] = self.dataset_all[temp[2].strip()][int(temp[3]), :].reshape(self.number_of_features)
-            targets[i] = temp[0].strip() != temp[2].strip()
+            targets[i] = temp[0].strip() == temp[2].strip()
             
         return pairs, targets
 
@@ -273,8 +273,6 @@ class DatasetHandler:
 #            if len(np.unique(probs)) != 5:
 #                print(probs)
             
-            if probs[np.argmin(probs)] > 0.5:
-                print(probs)
             if targets[np.argmax(votes)] == 0:
                 n_correct_voting += 1
                 
