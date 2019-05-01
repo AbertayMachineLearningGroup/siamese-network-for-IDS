@@ -97,10 +97,10 @@ class SiameseNet:
         margin = 1
         sqaure_pred = K.square(y_pred)
         margin_square = K.square(K.maximum(margin - y_pred, 0))
-        return K.mean(y_true * sqaure_pred + (1 - y_true) * margin_square)
+        return K.mean((1 - y_true) * sqaure_pred +  y_true * margin_square)
     
     def accuracy(self, y_true, y_pred):
         '''Compute classification accuracy with a fixed threshold on distances.
         '''
-        return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
+        return K.mean(K.equal(y_true, K.cast(y_pred >= 0.5, y_true.dtype)))
     
