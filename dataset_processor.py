@@ -193,19 +193,24 @@ class DatasetHandler:
             self.training_reps[category] = kmenas.cluster_centers_
             
     def load_batch(self, batch_size, file_name):
+        print(file_name)
         pairs = [np.zeros((batch_size, self.number_of_features)) for i in range(2)]
         targets = np.zeros((batch_size,))
         temp_file = pd.read_csv(file_name, header=None).values
         
         for i in range(batch_size):
+            if np.size(temp_file, axis = 0) == i:
+                print('break at {}'.format(i))
+                break
             temp = temp_file[i, :]
             pairs[0][i, :] = self.dataset_all[temp[0].strip()][int(temp[1]), :].reshape(self.number_of_features)
             pairs[1][i, :] = self.dataset_all[temp[2].strip()][int(temp[3]), :].reshape(self.number_of_features)
-            targets[i] = temp[0].strip() != temp[2].strip()
+            targets[i] = temp[0].strip() == temp[2].strip()
             
         return pairs, targets
 
-    def evaluate_classisfication(self, file_name, model, testing_batch_size):
+    def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes):
+        print(file_name)
         temp_file = pd.read_csv(file_name, header=None).values
         n_correct = 0
         n_correct_first_pair = 0
@@ -218,41 +223,48 @@ class DatasetHandler:
         
         n_correct_voting = 0
         
+        mis_classified_voting = {}
         mis_classified = {}
         
         for i in range(testing_batch_size):
-            votes = np.zeros((5,1))
+            if np.size(temp_file, axis = 0) == i:
+                print('break at {}'.format(i))
+                break
+            
+            votes = np.zeros((no_of_classes,1))
             
             temp_line = temp_file[i, :]
-            probs = np.zeros((5,1))
+            probs = np.zeros((no_of_classes,1))
             
-            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*5).reshape(5, self.number_of_features)
+            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*no_of_classes).reshape(no_of_classes, self.number_of_features)
 
             for mm in range(30):
-                temp = temp_line[2 + mm*10 :12 + mm*10]
-                support_set_1 = np.zeros((5, self.number_of_features)) 
+                temp = temp_line[2 + mm*(2*no_of_classes) :2 + (mm+1)*(2*no_of_classes)]
+                
+                support_set_1 = np.zeros((no_of_classes, self.number_of_features)) 
                 #support_set_2 = np.zeros((5, self.number_of_features)) 
                 
-                targets = np.zeros((5,))   
-                support_set_1[0,:] = self.dataset_all[temp[0].strip()][int(temp[1]), :]
-                #support_set_2[0,:] = self.training_reps[temp[0].strip()][0,:]
-                targets[0] = temp_line[0].strip() != temp[0].strip()
-                
-                support_set_1[1,:] = self.dataset_all[temp[2].strip()][int(temp[3]), :]
-                #support_set_2[1,:] = self.training_reps[temp[2].strip()][0,:]
-                targets[1] = temp_line[0].strip() != temp[2].strip()
-                
-                support_set_1[2,:] = self.dataset_all[temp[4].strip()][int(temp[5]), :]
-                #support_set_2[2,:] = self.training_reps[temp[4].strip()][0,:]
-                targets[2] = temp_line[0].strip() != temp[4].strip()
-                
-                support_set_1[3,:] = self.dataset_all[temp[6].strip()][int(temp[7]), :]
-                #support_set_2[3,:] = self.training_reps[temp[6].strip()][0,:]
-                targets[3] = temp_line[0].strip() != temp[6].strip()
-                
-                support_set_1[4,:] = self.dataset_all[temp[8].strip()][int(temp[9]), :]
-                #support_set_2[4,:] = self.training_reps[temp[8].strip()][0,:]
-                targets[4] = temp_line[0].strip() != temp[8].strip()
+                targets = np.zeros((no_of_classes,))   
+                for ci in range(no_of_classes):
+                    support_set_1[ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
+                    #support_set_2[0,:] = self.training_reps[temp[0].strip()][0,:]
+                    targets[ci] = temp_line[0].strip() != temp[2*ci].strip()
+                    
+#                support_set_1[1,:] = self.dataset_all[temp[2].strip()][int(temp[3]), :]
+#                #support_set_2[1,:] = self.training_reps[temp[2].strip()][0,:]
+#                targets[1] = temp_line[0].strip() != temp[2].strip()
+#                
+#                support_set_1[2,:] = self.dataset_all[temp[4].strip()][int(temp[5]), :]
+#                #support_set_2[2,:] = self.training_reps[temp[4].strip()][0,:]
+#                targets[2] = temp_line[0].strip() != temp[4].strip()
+#                
+#                support_set_1[3,:] = self.dataset_all[temp[6].strip()][int(temp[7]), :]
+#                #support_set_2[3,:] = self.training_reps[temp[6].strip()][0,:]
+#                targets[3] = temp_line[0].strip() != temp[6].strip()
+#                
+#                support_set_1[4,:] = self.dataset_all[temp[8].strip()][int(temp[9]), :]
+#                #support_set_2[4,:] = self.training_reps[temp[8].strip()][0,:]
+#                targets[4] = temp_line[0].strip() != temp[8].strip()
                 
                 modes_probs = model.predict([test_pair,support_set_1])
 
@@ -264,18 +276,15 @@ class DatasetHandler:
                         n_correct_first_pair+=1
             
                 if (mm + 1) in n_correct_variable_pairs:
-                    prob_temp = probs/(mm+1)
-                    if targets[np.argmin(prob_temp)] == 0:
-                        n_correct_variable_pairs[mm+1] += 1
-                    
+#                    prob_temp = probs/(mm+1)
+#                    if targets[np.argmin(prob_temp)] == 0:
+#                        n_correct_variable_pairs[mm+1] += 1
+                    if targets[np.argmax(votes)] == 0:
+                        n_correct_variable_pairs[mm+1]+=1
             probs/=30
             #print(n_correct)
 #            if len(np.unique(probs)) != 5:
 #                print(probs)
-            
-            if targets[np.argmax(votes)] == 0:
-                n_correct_voting += 1
-                
             if targets[np.argmin(probs)] == 0:
                 n_correct+=1
             else:
@@ -283,9 +292,16 @@ class DatasetHandler:
                 if key not in mis_classified: 
                     mis_classified[key] = 0
 
-                #print(probs[np.argmax(targets)])    
-                #print(probs[np.argmax(probs)])
                 mis_classified[key] += 1
+                
+            if targets[np.argmax(votes)] == 0:
+                n_correct_voting += 1
+            else:
+                key = temp_line[0].strip() + '_' + str(np.argmax(votes))
+                if key not in mis_classified_voting: 
+                    mis_classified_voting[key] = 0
+
+                mis_classified_voting[key] += 1
                 
             #probs = model.predict([test_pair,support_set_2])
             #if targets[np.argmax(probs)] == 1:
@@ -303,7 +319,7 @@ class DatasetHandler:
         
         accuracy_voting = (100.0*n_correct_voting / testing_batch_size)
         
-        return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting
+        return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting
     
     def evaluate_zero_day_detection(self, file_name, model, testing_batch_size, zero_day_file):
         temp_file = pd.read_csv(file_name, header=None).values

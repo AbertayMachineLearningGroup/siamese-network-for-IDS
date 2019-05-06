@@ -25,18 +25,42 @@ class SiameseNet:
         dropout_3 = 0.1       
         lr = 0.001
         
-        if network_id == 'kdd_new_archi_dropout_gradient':
+        if network_id == 'new_archi_dropout_gradient':
             dropout_1 = 0.3
             dropout_2 = 0.2
-        elif network_id == 'kdd_new_archi_dropout_less':
+        elif network_id == 'new_archi_dropout_less':
             dropout_1 = 0.05
             dropout_2 = 0.05
             dropout_3 = 0.05
-        elif network_id == 'kdd_new_archi_lr_0_0001':
+        elif network_id == 'new_archi_lr_0_0001':
             lr = 0.0001
-        elif network_id == 'kdd_new_archi_lr_0_0006':
+        elif network_id == 'new_archi_lr_0_0006':
             lr = 0.0006
-            
+        
+        #self.convnet.add(Dense(units = 525, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+       # self.convnet.add(Dropout(dropout_1))
+       # self.convnet.add(Dense(units = 450, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+       # self.convnet.add(Dropout(dropout_2))
+       # self.convnet.add(Dense(units = 375, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+       # self.convnet.add(Dropout(dropout_3))
+       # self.convnet.add(Dense(units = 300, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+       # self.convnet.add(Dropout(dropout_3))
+        #self.convnet.add(Dense(units = 225, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+      #  self.convnet.add(Dropout(dropout_3))
+      #  self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+      #  self.convnet.add(Dropout(dropout_3))
+      #  self.convnet.add(Dense(units = 75, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+        
+        
+#        self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+#        self.convnet.add(Dropout(dropout_1))
+#        self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+#        if network_id != 'less_layers':
+#            self.convnet.add(Dropout(dropout_2))
+#            self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+#        self.convnet.add(Dropout(dropout_3))
+#        self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+
         self.convnet.add(Dense(units = 98, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
         self.convnet.add(Dropout(dropout_1))
         self.convnet.add(Dense(units = 79, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
@@ -61,10 +85,11 @@ class SiameseNet:
         self.siamese_net = Model(inputs=[self.left_input,self.right_input],outputs=self.L1_distance)
         
         #self.optimizer = Adam(0.00006)
-        #self.optimizer = Adam(lr)
-        self.optimizer = RMSprop()
+        self.optimizer = Adam(lr)
+        #self.optimizer = RMSprop()
         #self.siamese_net.compile(loss="binary_crossentropy", optimizer=self.optimizer)#metrics
         self.siamese_net.compile(loss=self.contrastive_loss, optimizer=self.optimizer, metrics=[self.accuracy])
+        
         #metrics=['binary_accuracy'],
         #self.siamese_net.summary()
         #self.siamese_net.count_params()
@@ -97,10 +122,10 @@ class SiameseNet:
         margin = 1
         sqaure_pred = K.square(y_pred)
         margin_square = K.square(K.maximum(margin - y_pred, 0))
-        return K.mean((1 - y_true) * sqaure_pred +  y_true * margin_square)
+        return K.mean(y_true * sqaure_pred + (1 - y_true) * margin_square)
     
     def accuracy(self, y_true, y_pred):
         '''Compute classification accuracy with a fixed threshold on distances.
         '''
-        return K.mean(K.equal(y_true, K.cast(y_pred >= 0.5, y_true.dtype)))
+        return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
     

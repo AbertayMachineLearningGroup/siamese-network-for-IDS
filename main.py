@@ -77,21 +77,31 @@ if __name__ == "__main__":
         #(inputs1, targets1) = dataset_handler.get_batch(args.batch_size, args.verbose)
         #(inputs_val, targets_val) = dataset_handler.get_validation_batch(args.validation_batch_size, args.verbose)
         #print(args.comb_index)
-        (inputs1, targets1) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/kdd_30000_{}_Training_Pairs.csv'.format(args.comb_index))
+        (inputs1, targets1) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/{}_{}_{}_Training_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index))
         if args.train_with_all:
-            (inputs_val, targets_val) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/kdd_30000_{}_Validation_Pairs.csv'.format(args.comb_index))
+            (inputs_val, targets_val) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/{}_{}_{}_Validation_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
         
         #min_validation_loss = 1000
         #max_validation_loss = 0
         loss = np.zeros(args.niterations)
         validation_loss = np.zeros(args.niterations)
+        tr_acc = np.zeros(args.niterations)
+        val_acc = np.zeros(args.niterations)
         for i in range(1, args.niterations + 1):
             #print('{}'.format(i))
             if args.use_sub_batches:
-                 hist = wrapper.siamese_net.fit(inputs1,targets1, batch_size = 3000, validation_data= (inputs_val,targets_val)).history
-                 loss[i-1] = hist['loss'][0]
+                if args.train_with_all:
+                    hist = wrapper.siamese_net.fit(inputs1,targets1, batch_size = args.batch_size//1000, validation_data= (inputs_val,targets_val)).history
+                    val_acc[i-1] = round(hist['val_accuracy'][0]*100, 2)
+                else:
+                    hist = wrapper.siamese_net.fit(inputs1,targets1, batch_size = args.batch_size//1000).history
+                    
+
+                loss[i-1] = hist['loss'][0]
+                tr_acc[i-1] = round(hist['accuracy'][0]*100, 2)
             else:
-                 loss[i-1] = wrapper.siamese_net.train_on_batch(inputs1,targets1)
+                loss[i-1] = wrapper.siamese_net.train_on_batch(inputs1,targets1)
+                
             if args.train_with_all:
                 if args.use_sub_batches:
                     validation_loss[i-1] = hist['val_loss'][0]
@@ -111,7 +121,7 @@ if __name__ == "__main__":
             print('{} -> Loss = {} validation loss = {}'.format(i, loss[i-1], validation_loss[i-1]))
         
             if i >= 500 and i%500 == 0:
-                if args.train_with_all:
+                if args.train_with_all or args.test_vs_all:
                     plt.clf()
                     training_plot, = plt.plot(loss[0:i])
                     val_plot, = plt.plot(validation_loss[0:i])
@@ -119,15 +129,17 @@ if __name__ == "__main__":
                     plt.ylabel('Loss')
                     plt.legend([training_plot, val_plot], ['Training Loss', 'Validation Loss'])
                     
-                    plt.savefig('loss_0.00006_Run_{}.png'.format(args.network_id))
-                    accuracy1, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting = dataset_handler.evaluate_classisfication('/home/hananhindy/kdd_30000_{}_Classification_Pairs.csv'.format(args.comb_index),
+                    plt.savefig('loss_Run_{}.png'.format(args.network_id))
+                    accuracy1, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting = dataset_handler.evaluate_classisfication(
+                                                '/home/hananhindy/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
                                                  wrapper.siamese_net, 
-                                                 30000)
+                                                 args.batch_size,
+                                                 len(all_classes))
                 else:
                     accuracy1, accuracy_not_normal, mis_classified, labeled_one, labeled_any, labeled_all , lablled_avg = dataset_handler.evaluate_zero_day_detection('/home/hananhindy/kdd_30000_{}_Zero_Day_Pairs.csv'.format(args.comb_index),
                                                      wrapper.siamese_net, 
-                                                     30000,
-                                                     '/home/hananhindy/Same_Classkdd_30000_{}_Zero_Day_Pairs.csv'.format(args.comb_index))
+                                                     args.batch_size,
+                                                     '/home/hananhindy/Same_Class{}_{}_{}_Zero_Day_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
                     #accuracy2 = -1
                     #accuracy_k_menas = -1
                     #accuracy2 = dataset_handler.evaluate_classisfication('/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/2_kdd_150000_Classification_Pairs.csv',
@@ -135,8 +147,8 @@ if __name__ == "__main__":
                     #                                 150000)
                     
                 with open(args.output_file_name, "a") as file_writer:
-                    if args.train_with_all:
-                        file_writer.write('accuracy ,' + str(accuracy1) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
+                    if args.train_with_all or args.test_vs_all:
+                        file_writer.write('accuracy probs ,' + str(accuracy1) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
                         file_writer.write('accuracy with differnt number of pairs\n')
                         w = csv.DictWriter(file_writer, accuracy_pairs.keys())
                         w.writeheader()
@@ -155,14 +167,19 @@ if __name__ == "__main__":
                         w.writerow(accuracy_not_normal)     
 
                         
-                    file_writer.write('misclassified\n')
+                    file_writer.write('misclassified using probs (30 pairs)\n')
                     w = csv.DictWriter(file_writer, mis_classified.keys())
                     w.writeheader()
                     w.writerow(mis_classified)
+                    
+                    file_writer.write('misclassified using voting (30 pairs)\n')
+                    w = csv.DictWriter(file_writer, mis_classified_voting.keys())
+                    w.writeheader()
+                    w.writerow(mis_classified_voting)
 
         wrapper.siamese_net.save(os.path.join('/home/hananhindy/dump_networks/', '{}_{}_{}'.format(args.comb_index, args.network_id, time.strftime("%Y%m%d-%H%M%S"))))
         
-        if args.train_with_all:
+        if args.train_with_all or args.test_vs_all:
             plt.clf()
             training_plot, = plt.plot(loss[loss>0])
             val_plot, = plt.plot(validation_loss[validation_loss>0])
@@ -171,7 +188,19 @@ if __name__ == "__main__":
             plt.legend([training_plot, val_plot], ['Training Loss', 'Validation Loss'])
             
             plt.savefig('loss_Run_{}_{}.png'.format(args.network_id, time.strftime("%Y%m%d-%H%M%S")))
-#        
+            plt.ylim(bottom=0, top=3)  # adjust the top leaving bottom unchanged
+            
+            plt.savefig('limit_loss_Run_{}_{}.png'.format(args.network_id, time.strftime("%Y%m%d-%H%M%S")))
+
+            plt.clf()
+            training_plot, = plt.plot(tr_acc[tr_acc>0])
+            val_plot, = plt.plot(val_acc[val_acc>0])
+            plt.xlabel('Iteration no')
+            plt.ylabel('Accuracy')
+            plt.legend([training_plot, val_plot], ['Training Acc', 'Validation Acc'])
+            
+            plt.savefig('accuarcy_Run_{}_{}.png'.format(args.network_id, time.strftime("%Y%m%d-%H%M%S")))
+            
 #            if i % args.loss_every == 0:
 #                if args.print_loss:
 #                    loss_array.append(loss) 
