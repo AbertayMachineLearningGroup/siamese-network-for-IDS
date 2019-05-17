@@ -73,7 +73,7 @@ if __name__ == "__main__":
 #        best_threashold_acc = {}
 #        
         #dataset_handler.generate_training_representitives_of_50_percent(1)
-        wrapper = SiameseNet((dataset_handler.number_of_features,), args.network_id, args.verbose)
+        wrapper = SiameseNet((dataset_handler.number_of_features,), args.network_id, args.dataset_name, args.verbose)
         #(inputs1, targets1) = dataset_handler.get_batch(args.batch_size, args.verbose)
         #(inputs_val, targets_val) = dataset_handler.get_validation_batch(args.validation_batch_size, args.verbose)
         #print(args.comb_index)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 #            
             print('{} -> Loss = {} validation loss = {}'.format(i, loss[i-1], validation_loss[i-1]))
         
-            if i >= 500 and i%500 == 0:
+            if i >= args.evaluate_every and i%args.evaluate_every == 0:
                 if args.train_with_all or args.test_vs_all:
                     plt.clf()
                     training_plot, = plt.plot(loss[0:i])
@@ -136,10 +136,16 @@ if __name__ == "__main__":
                                                  args.batch_size,
                                                  len(all_classes))
                 else:
-                    accuracy1, accuracy_not_normal, mis_classified, labeled_one, labeled_any, labeled_all , lablled_avg = dataset_handler.evaluate_zero_day_detection('/home/hananhindy/kdd_30000_{}_Zero_Day_Pairs.csv'.format(args.comb_index),
-                                                     wrapper.siamese_net, 
-                                                     args.batch_size,
-                                                     '/home/hananhindy/Same_Class{}_{}_{}_Zero_Day_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
+                    index_of_zero_day_category = all_classes.index([item for item in all_classes if item not in training_categories][0])
+                    accuracy_zero_day, conf_mat = dataset_handler.evaluate_zero_day_new('/home/hananhindy/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index),
+                                                                                              wrapper.siamese_net, 
+                                                                                              args.batch_size,
+                                                                                              len(all_classes),
+                                                                                              index_of_zero_day_category)
+                    #accuracy1, accuracy_not_normal, mis_classified, labeled_one, labeled_any, labeled_all , lablled_avg = dataset_handler.evaluate_zero_day_detection('/home/hananhindy/kdd_30000_{}_Zero_Day_Pairs.csv'.format(args.comb_index),
+                    #                                 wrapper.siamese_net, 
+                    #                                 args.batch_size,
+                    #                                 '/home/hananhindy/Same_Class{}_{}_{}_Zero_Day_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
                     #accuracy2 = -1
                     #accuracy_k_menas = -1
                     #accuracy2 = dataset_handler.evaluate_classisfication('/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/2_kdd_150000_Classification_Pairs.csv',
@@ -153,29 +159,37 @@ if __name__ == "__main__":
                         w = csv.DictWriter(file_writer, accuracy_pairs.keys())
                         w.writeheader()
                         w.writerow(accuracy_pairs)
+                        file_writer.write('misclassified using probs (30 pairs)\n')
+                        w = csv.DictWriter(file_writer, mis_classified.keys())
+                        w.writeheader()
+                        w.writerow(mis_classified)
                         
+                        file_writer.write('misclassified using voting (30 pairs)\n')
+                        w = csv.DictWriter(file_writer, mis_classified_voting.keys())
+                        w.writeheader()
+                        w.writerow(mis_classified_voting)
                     else:
-                        file_writer.write('accuracy labeled one pair,' + str(labeled_one) + ',' + 'any,' +  str(labeled_any) + ',all,' + str(labeled_all) + ',avg,'+ str(lablled_avg) + "\n")
+                        file_writer.write('accuracy = ,' + str(accuracy_zero_day)+ '\n')
+                        thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 
-                        file_writer.write('accuracy dissimilar to all training (found all similarities > x)\n')
-                        w = csv.DictWriter(file_writer, accuracy1.keys())
-                        w.writeheader()
-                        w.writerow(accuracy1)
-                        file_writer.write('accuracy dissimilar to normal (found noraml similarity > x)\n')
-                        w = csv.DictWriter(file_writer, accuracy_not_normal.keys())
-                        w.writeheader()
-                        w.writerow(accuracy_not_normal)     
+                        for th in thresholds:
+                            file_writer.write('threshold = {}\n'.format(th))
+                            w = csv.DictWriter(file_writer, conf_mat[th].keys())
+                            w.writeheader()
+                            w.writerow(conf_mat[th])
+#                        file_writer.write('accuracy labeled one pair,' + str(labeled_one) + ',' + 'any,' +  str(labeled_any) + ',all,' + str(labeled_all) + ',avg,'+ str(lablled_avg) + "\n")
+#
+#                        file_writer.write('accuracy dissimilar to all training (found all similarities > x)\n')
+#                        w = csv.DictWriter(file_writer, accuracy1.keys())
+#                        w.writeheader()
+#                        w.writerow(accuracy1)
+#                        file_writer.write('accuracy dissimilar to normal (found noraml similarity > x)\n')
+#                        w = csv.DictWriter(file_writer, accuracy_not_normal.keys())
+#                        w.writeheader()
+#                        w.writerow(accuracy_not_normal)     
 
                         
-                    file_writer.write('misclassified using probs (30 pairs)\n')
-                    w = csv.DictWriter(file_writer, mis_classified.keys())
-                    w.writeheader()
-                    w.writerow(mis_classified)
                     
-                    file_writer.write('misclassified using voting (30 pairs)\n')
-                    w = csv.DictWriter(file_writer, mis_classified_voting.keys())
-                    w.writeheader()
-                    w.writerow(mis_classified_voting)
 
         wrapper.siamese_net.save(os.path.join('/home/hananhindy/dump_networks/', '{}_{}_{}'.format(args.comb_index, args.network_id, time.strftime("%Y%m%d-%H%M%S"))))
         

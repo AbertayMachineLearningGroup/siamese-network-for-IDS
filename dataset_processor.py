@@ -321,6 +321,72 @@ class DatasetHandler:
         
         return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting
     
+    def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day):
+        print(file_name)
+        temp_file = pd.read_csv(file_name, header=None).values
+        n_correct_voting = {}
+        conf_matix = {}
+        thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+        for th in thresholds:
+            n_correct_voting[th] = 0
+            conf_matix [th] = {}
+            
+        no_of_known_classes = no_of_classes-1
+      
+      
+        for i in range(testing_batch_size):
+            votes = {}
+            for th in thresholds:
+                votes[th] = np.zeros((no_of_known_classes,1))
+                
+            if np.size(temp_file, axis = 0) == i:
+                print('break at {}'.format(i))
+                break
+            
+            temp_line = temp_file[i, :]
+            
+            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*no_of_known_classes).reshape(no_of_known_classes, self.number_of_features)
+
+            for mm in range(30):
+                temp = temp_line[2 + mm*(2*no_of_classes) :2 + (mm+1)*(2*no_of_classes)]
+                
+                support_set_1 = np.zeros((no_of_known_classes, self.number_of_features)) 
+                
+                targets = np.zeros((no_of_known_classes,))   
+                index_ci = 0
+                for ci in range(no_of_classes):
+                    if ci != index_of_zero_day:
+                        support_set_1[index_ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
+                        targets[index_ci] = temp_line[0].strip() != temp[2*ci].strip()    
+                        index_ci += 1
+                   
+                modes_probs = model.predict([test_pair,support_set_1])
+                for th in thresholds:
+                    if modes_probs[np.argmin(modes_probs)] < th:
+                        votes[th][modes_probs == modes_probs[np.argmin(modes_probs)]] += 1
+                
+            for th in thresholds:
+                predicted_class = -1
+                if votes[th][np.argmax(votes[th])] >= 10:
+                    predicted_class = np.argmax(votes[th])
+                
+                if (predicted_class == -1 and np.all(targets) == 1) or (predicted_class >= 0 and targets[predicted_class] == 0):
+                    #correctly predicted
+                    n_correct_voting[th] += 1
+                
+                key = temp_line[0].strip() + '_' + str(predicted_class)
+                if key not in conf_matix[th]:
+                    conf_matix[th][key] = 0
+                conf_matix[th][key] += 1
+                
+        
+        accuracy = {}
+        for th in thresholds:
+            accuracy[th] = n_correct_voting[th]/testing_batch_size
+        
+        return accuracy, conf_matix
+    
+    
     def evaluate_zero_day_detection(self, file_name, model, testing_batch_size, zero_day_file):
         temp_file = pd.read_csv(file_name, header=None).values
         temo_zero_day_file = pd.read_csv(zero_day_file, header=None).values

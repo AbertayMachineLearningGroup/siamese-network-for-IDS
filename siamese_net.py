@@ -15,7 +15,7 @@ from keras.regularizers import l2
 import numpy.random as rng
 
 class SiameseNet:
-    def __init__(self, input_shape, network_id = 'kdd_0', verbose = True):
+    def __init__(self, input_shape, network_id = 'kdd_0', dataset_name = 'kdd', verbose = True):
         
         self.left_input = Input(input_shape)
         self.right_input = Input(input_shape)
@@ -37,39 +37,44 @@ class SiameseNet:
         elif network_id == 'new_archi_lr_0_0006':
             lr = 0.0006
         
-        #self.convnet.add(Dense(units = 525, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-       # self.convnet.add(Dropout(dropout_1))
-       # self.convnet.add(Dense(units = 450, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-       # self.convnet.add(Dropout(dropout_2))
-       # self.convnet.add(Dense(units = 375, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-       # self.convnet.add(Dropout(dropout_3))
-       # self.convnet.add(Dense(units = 300, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-       # self.convnet.add(Dropout(dropout_3))
-        #self.convnet.add(Dense(units = 225, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-      #  self.convnet.add(Dropout(dropout_3))
-      #  self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-      #  self.convnet.add(Dropout(dropout_3))
-      #  self.convnet.add(Dense(units = 75, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-        
-        
-#        self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-#        self.convnet.add(Dropout(dropout_1))
-#        self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-#        if network_id != 'less_layers':
+        if dataset_name == 'kdd':
+            self.convnet.add(Dense(units = 98, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dropout(dropout_1))
+            self.convnet.add(Dense(units = 79, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+            self.convnet.add(Dropout(dropout_2))
+            self.convnet.add(Dense(units = 59, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 39, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+        elif dataset_name == 'STA':
+            self.convnet.add(Dense(units = 500, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dropout(dropout_1))
+            self.convnet.add(Dense(units = 400, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dropout(dropout_2))
+            self.convnet.add(Dense(units = 300, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 200, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 100, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 50, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+        elif dataset_name == 'SCADA':
+            self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dropout(dropout_1))
+            self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+            if network_id != 'less_layers':
+            	self.convnet.add(Dropout(dropout_2))
+            	self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+            self.convnet.add(Dropout(dropout_3))
+            self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+
 #            self.convnet.add(Dropout(dropout_2))
 #            self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
 #        self.convnet.add(Dropout(dropout_3))
 #        self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-
-        self.convnet.add(Dense(units = 98, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-        self.convnet.add(Dropout(dropout_1))
-        self.convnet.add(Dense(units = 79, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-        self.convnet.add(Dropout(dropout_2))
-        self.convnet.add(Dense(units = 59, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-        self.convnet.add(Dropout(dropout_3))
-        self.convnet.add(Dense(units = 39, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-        self.convnet.add(Dropout(dropout_3))
-        self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+         
+        
         
         
         #call the convnet Sequential model on each of the input tensors so params will be shared

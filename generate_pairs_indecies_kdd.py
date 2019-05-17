@@ -72,8 +72,6 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
                   format(c, instances_count[c]))
     
     elif dataset_name == 'STA':
-        
-        path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed'
         normal_path = path + '/11jun.10percentNormalno_syn.csv'
         dos_path = path + '/14jun.10percentAttackno_syn.csv'
         ddos_path = path + '/15jun.10percentAttackno_syn.csv'
@@ -89,7 +87,6 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
             instances_count[c] = np.size(dataset_dictionary[c], axis=0)
             print('"{}" has {} instances'.
                   format(c, instances_count[c]))
-    
     
     classes = original_classes.copy()
     all_conbinations = list(itertools.combinations(original_classes, number_of_classes_for_training))
@@ -285,12 +282,13 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
                         
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset_name', dest='dataset_name', default='kdd')
+    args.add_argument('--dataset_name', dest='dataset_name', default='STA')
     args.add_argument('--number_of_pairs', dest='number_of_pairs', default=30000)
-    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 4)
+    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 3)
     args.add_argument('--comb_index', dest='comb_index', default=3)
-    args.add_argument('--one_shot', dest='one_shot', default=True)
-    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
+    args.add_argument('--one_shot', dest='one_shot', default=False)
+    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed')
+    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv')
     args_values = args.parse_args() 
     
