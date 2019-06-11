@@ -37,7 +37,7 @@ class SiameseNet:
         elif network_id == 'new_archi_lr_0_0006':
             lr = 0.0006
         
-        if dataset_name == 'kdd':
+        if dataset_name == 'kdd' or dataset_name == 'nsl-kdd':
             self.convnet.add(Dense(units = 98, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dropout(dropout_1))
             self.convnet.add(Dense(units = 79, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
@@ -48,18 +48,23 @@ class SiameseNet:
             self.convnet.add(Dropout(dropout_3))
             self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
         elif dataset_name == 'STA':
-            self.convnet.add(Dense(units = 500, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dense(units = 510, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dropout(dropout_1))
-            self.convnet.add(Dense(units = 400, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            #self.convnet.add(Dense(units = 450, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            #self.convnet.add(Dropout(dropout_1))
+            self.convnet.add(Dense(units = 390, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dropout(dropout_2))
-            self.convnet.add(Dense(units = 300, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            #self.convnet.add(Dense(units = 330, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            #self.convnet.add(Dropout(dropout_2))
+            self.convnet.add(Dense(units = 270, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dropout(dropout_3))
-            self.convnet.add(Dense(units = 200, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dense(units = 210, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
             self.convnet.add(Dropout(dropout_3))
-            self.convnet.add(Dense(units = 100, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            self.convnet.add(Dropout(dropout_3))
-            self.convnet.add(Dense(units = 50, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-        elif dataset_name == 'SCADA':
+            self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            #self.convnet.add(Dropout(dropout_3))
+            #self.convnet.add(Dense(units = 90, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            
+        elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
             self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dropout(dropout_1))
             self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))

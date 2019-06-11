@@ -13,12 +13,13 @@ import itertools
 import random
                
 def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_for_training, comb_index, is_one_shot):
-    if dataset_name == 'kdd':
+    if dataset_name == 'kdd' or dataset_name == 'nsl-kdd':
         dataset = pd.read_csv(path, header=None)
-        dataset[41] = dataset[41].str[:-1]
+        if dataset_name == 'kdd':
+            dataset[41] = dataset[41].str[:-1]
+
         dataset[42] = ''
         dataset = dataset.values
-        
         base_classes_map = {}
         base_classes_map['normal'] =  'normal'
         base_classes_map['back'] = 'dos'
@@ -58,12 +59,19 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
             instances_count[c] = np.size(dataset[dataset[:,42] == c, :], axis=0)
             print('"{}" has {} instances'.
                   format(c, instances_count[c]))
-    elif dataset_name == 'SCADA':
+    elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
         dataset = pd.read_csv(path)
         dataset = dataset.dropna().values
         original_classes = np.unique(dataset[:, 12])
         original_classes[0], original_classes[6] = original_classes[6], original_classes[0]
         print(len(original_classes))
+        if dataset_name == 'SCADA_Reduced':
+            original_classes = list(original_classes)
+            original_classes.remove('7 Floating objects')
+            original_classes.remove('2 Floating objects')
+            original_classes.remove('Plastic bag')
+            original_classes.remove('Sensor Failure')
+    
         instances_count = {}
 
         for c in original_classes:
@@ -115,11 +123,12 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
     
     for s in generate:
         for c in classes:
-            if number_of_classes_for_training == len(original_classes):
-                half_instances = instances_count[c]//2
-            else:
-                half_instances = instances_count[c]
-                
+            half_instances = instances_count[c]//2
+#            if number_of_classes_for_training == len(original_classes):
+#                half_instances = instances_count[c]//2
+#            else:
+#                half_instances = instances_count[c]
+#                
             print('Half instances of {} is {}'.format(c, half_instances))
             
             used_pairs = set()
@@ -159,13 +168,14 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
     total_number_dis_similar_per_combination = total_number_of_dis_similar_pairs//len(all_conbinations)
     for s in generate:
         for comb in all_conbinations:
-            if number_of_classes_for_training == len(original_classes):
-                half_instances_c1 = instances_count[comb[0]]//2
-                half_instances_c2 = instances_count[comb[1]]//2        
-            else:
-                half_instances_c1 = instances_count[comb[0]]
-                half_instances_c2 = instances_count[comb[1]]
-            
+            half_instances_c1 = instances_count[comb[0]]//2
+            half_instances_c2 = instances_count[comb[1]]//2  
+#            if number_of_classes_for_training == len(original_classes):
+#                half_instances_c1 = instances_count[comb[0]]//2
+#                half_instances_c2 = instances_count[comb[1]]//2        
+#            else:
+#                half_instances_c1 = instances_count[comb[0]]
+#                half_instances_c2 = instances_count[comb[1]]
         
             print('Half instances of {} is {}'.format(comb[0], half_instances_c1))
             print('Half instances of {} is {}'.format(comb[1], half_instances_c2))
@@ -173,11 +183,11 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
             if s == 't':
                 current_range_c1 = range(half_instances_c1)
                 current_range_c2 = range(half_instances_c2)
-                file_name = '{}_{}_{}_Training_Pairs.csv'.format(dataset_name, total_number_of_pairs, comb_index)
+                file_name = training_file_name
             else:
                 current_range_c1 = range(half_instances_c1, instances_count[comb[0]])
                 current_range_c2 = range(half_instances_c2, instances_count[comb[1]])
-                file_name = '{}_{}_{}_Validation_Pairs.csv'.format(dataset_name, total_number_of_pairs, comb_index)
+                file_name = validation_file_name
     
             numbers_c1 = list(current_range_c1)
             numbers_c2 = list(current_range_c2)
@@ -193,103 +203,55 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
                         break
     
     
-    if number_of_classes_for_training == len(original_classes) or is_one_shot:
-        #generate classification testing instances
-
-        lists = {}
-        for x in range(len(original_classes)):
-            if is_one_shot and original_classes[x] not in classes:
-                print("TESTTTTT "+ original_classes[x])
-                lists[x] = list(range(0, instances_count[original_classes[x]]//2))
-            else:
-                lists[x] = list(range(instances_count[original_classes[x]]//2, instances_count[original_classes[x]]))
+    #generate classification testing instances
+    lists = {}
+    for x in range(len(original_classes)):
+        if is_one_shot and original_classes[x] not in classes:
+            print("One-Shot Class "+ original_classes[x])
+            #Use half as if there are labelled 
+            lists[x] = list(range(0, instances_count[original_classes[x]]//2))
+        else:
+            lists[x] = list(range(instances_count[original_classes[x]]//2, instances_count[original_classes[x]]))
+    
+    file_name = '{}_{}_{}_Classification_Pairs.csv'.format(dataset_name, total_number_of_pairs, comb_index)
+    if os.path.exists(file_name):
+        os.remove(file_name)   
         
-#        list_c0 = list(range(instances_count[classes[0]]//2, instances_count[classes[0]]))
-#        list_c1 = list(range(instances_count[classes[1]]//2, instances_count[classes[1]]))
-#        list_c2 = list(range(instances_count[classes[2]]//2, instances_count[classes[2]]))
-#        list_c3 = list(range(instances_count[classes[3]]//2, instances_count[classes[3]]))
-#        list_c4 = list(range(instances_count[classes[4]]//2, instances_count[classes[4]]))
-#        list_c5 = list(range(instances_count[classes[5]]//2, instances_count[classes[5]]))
-        file_name = '{}_{}_{}_Classification_Pairs.csv'.format(dataset_name, total_number_of_pairs, comb_index)
-        if os.path.exists(file_name):
-            os.remove(file_name)   
+    for c in original_classes:
+        for i in range(total_number_of_classification_pairs_per_class):
+            used_pairs = set()
+            pair_temp = []
             
-        for c in original_classes:
-            for i in range(total_number_of_classification_pairs_per_class):
-                used_pairs = set()
-                pair_temp = []
-                
-                while True:
-                    pair_temp.append(random.sample(range(instances_count[c]//2, instances_count[c]), 1)[0])
+            while True:
+                pair_temp.append(random.sample(range(instances_count[c]//2, instances_count[c]), 1)[0])
+                for mm in range(30):
+                    for x in range(len(original_classes)):
+                        pair_temp.append(random.sample(lists[x],1)[0])
+                        
+                pairs = tuple(pair_temp)
+                if pairs not in used_pairs:
+                    used_pairs.add(pairs)
+                    str_pair = c + ',' + str(pairs[0]) + ','
                     for mm in range(30):
-                        for x in range(len(original_classes)):
-                            pair_temp.append(random.sample(lists[x],1)[0])
-#                        pair_temp.append(random.sample(list_c1,1)[0])
-#                        pair_temp.append(random.sample(list_c2,1)[0])
-#                        pair_temp.append(random.sample(list_c3,1)[0])
-#                        pair_temp.append(random.sample(list_c4,1)[0])
-#                        pair_temp.append(random.sample(list_c5,1)[0])
-#                        
-                    pairs = tuple(pair_temp)
-                    if pairs not in used_pairs:
-                        used_pairs.add(pairs)
-                        str_pair = c + ',' + str(pairs[0]) + ','
-                        for mm in range(30):
-                            for mmm in range(len(original_classes)):
-                                str_pair += original_classes[mmm] + ',' + str(pairs[1 + mm*len(original_classes)+mmm]) + ','
-                        with open(file_name, "a") as file_writer:
-                            file_writer.write("{}\n".format(str_pair))
-                        break                   
-            
-                
-    else:
-        list_c0 = list(range(instances_count[classes[0]]))
-        list_c1 = list(range(instances_count[classes[1]]))
-        list_c2 = list(range(instances_count[classes[2]]))
-        list_c3 = list(range(instances_count[classes[3]]))
+                        for mmm in range(len(original_classes)):
+                            str_pair += original_classes[mmm] + ',' + str(pairs[1 + mm*len(original_classes)+mmm]) + ','
+                    with open(file_name, "a") as file_writer:
+                        file_writer.write("{}\n".format(str_pair))
+                    break                   
         
-        total_number_of_zero_day_pairs_per_class = total_number_of_pairs//(len(original_classes) - len(classes))
-        file_name = '{}_{}_{}_Zero_Day_Pairs.csv'.format(dataset_name, total_number_of_pairs, comb_index)
-        testing_classes = [item for item in original_classes if item not in classes]
-        for c in testing_classes:
-            for i in range(total_number_of_zero_day_pairs_per_class):
-                used_pairs = set()
-                pair_temp = []
                 
-                while True:
-                    pair_temp.append(random.sample(range(instances_count[c]//2), 1)[0])
-                    for mm in range(30):
-                        pair_temp.append(random.sample(list_c0,1)[0])
-                        pair_temp.append(random.sample(list_c1,1)[0])
-                        pair_temp.append(random.sample(list_c2,1)[0])
-                        pair_temp.append(random.sample(list_c3,1)[0])
-                        
-                    pairs = tuple(pair_temp)           
-
-                    if pairs not in used_pairs:
-                        used_pairs.add(pairs)
-                        str_pair = c + ',' + str(pairs[0]) + ','
-                        for mm in range(30):
-                            for mmm in range(number_of_classes_for_training):
-                                str_pair += classes[mmm] + ',' + str(pairs[1 + mm*number_of_classes_for_training+mmm]) + ','
-                        with open(file_name, "a") as file_writer:
-                            file_writer.write("{}\n".format(str_pair))        
-                        str_pair_2 = ','.join(map(str,random.sample(range(instances_count[c]//2, instances_count[c]), 5)))
-                        
-                        with open('Same_Class' + file_name, "a") as file_writer:
-                            file_writer.write("{}\n".format(str_pair_2))    
-                        break
                         
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset_name', dest='dataset_name', default='STA')
+    args.add_argument('--dataset_name', dest='dataset_name', default='nsl-kdd')
     args.add_argument('--number_of_pairs', dest='number_of_pairs', default=30000)
-    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 3)
-    args.add_argument('--comb_index', dest='comb_index', default=3)
-    args.add_argument('--one_shot', dest='one_shot', default=False)
-    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed')
+    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 4)
+    args.add_argument('--comb_index', dest='comb_index', default=0, type= int)
+    args.add_argument('--one_shot', dest='one_shot', default=True)
+    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed')
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv')
+    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt')
     args_values = args.parse_args() 
     
     generate_pairs(args_values.dataset_name, args_values.path, args_values.number_of_pairs, args_values.number_of_training_classes, args_values.comb_index, args_values.one_shot)    

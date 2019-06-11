@@ -17,9 +17,10 @@ class DatasetHandler:
     def __init__(self, path, dataset_name, verbose = True):
         self.number_of_reps = 1
         self.dataset_name = dataset_name
-        if dataset_name == 'kdd':
+        if dataset_name == 'kdd' or dataset_name == 'nsl-kdd':
             self.dataset = pd.read_csv(path, header=None)
-            self.dataset[41] = self.dataset[41].str[:-1]
+            if dataset_name == 'kdd':  
+                self.dataset[41] = self.dataset[41].str[:-1]
             self.dataset[42] = ''        #to add class (DoS, U2R, ....)
             self.dataset = self.dataset.values
             
@@ -33,7 +34,7 @@ class DatasetHandler:
            self.dataset_dictionary['normal'] = pd.read_csv(normal_path, header = None).values
            self.dataset_dictionary['dos'] = pd.read_csv(dos_path, header = None).values
            self.dataset_dictionary['ddos'] = pd.read_csv(ddos_path, header = None).values
-        elif dataset_name == 'SCADA':
+        elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
            self.dataset = pd.read_csv(path)
            self.dataset = self.dataset.dropna().values
                        
@@ -72,22 +73,27 @@ class DatasetHandler:
     
     def get_classes(self):
         print(self.dataset_name)
-        if self.dataset_name == 'kdd':
+        if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
             temp = np.unique(self.dataset[:, 42])
             temp[0], temp[1] = temp[1], temp[0]
         elif self.dataset_name == 'STA':
             temp = [*self.dataset_dictionary.keys()]
-        elif self.dataset_name == 'SCADA':
+        elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
             temp = np.unique(self.dataset[:, 12])
             temp[0], temp[6] = temp[6], temp[0]
-            
+            if self.dataset_name == 'SCADA_Reduced':
+                temp = list(temp)
+                temp.remove('7 Floating objects')
+                temp.remove('2 Floating objects')
+                temp.remove('Plastic bag')
+                temp.remove('Sensor Failure')
         return temp
     
     def encode_split(self, training_categories, testing_categories, max_instances_count = -1, k_fold = 0, verbose = True):
         self.training_categories = training_categories
         self.testing_categories = testing_categories
         
-        if self.dataset_name == 'kdd':
+        if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
             label_encoder_1 = LabelEncoder()
             label_encoder_2 = LabelEncoder()
             label_encoder_3 = LabelEncoder()
@@ -112,9 +118,9 @@ class DatasetHandler:
             for category in training_categories:
                 if self.dataset_name == 'STA':
                     temp = self.dataset_dictionary[category]
-                elif self.dataset_name == 'kdd':
+                elif self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
                     temp = self.dataset_features[self.dataset[:, 42] == category , :]
-                elif self.dataset_name == 'SCADA':
+                elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == category, 0: 10]
                     
                 temp_size = np.size(temp, axis = 0)
@@ -135,9 +141,9 @@ class DatasetHandler:
                 return
             
             for training in training_categories:
-                if self.dataset_name == 'kdd':
+                if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
                     temp = self.dataset_features[self.dataset[:, 42] == training , :]
-                elif self.dataset_name == 'SCADA':
+                elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == training , 0: 10]
 
                 temp_size = np.size(temp, axis = 0)
@@ -151,9 +157,9 @@ class DatasetHandler:
                 self.training_instances_count[training] = temp_size
             
             for testing in testing_categories:
-                if self.dataset_name == 'kdd':
+                if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
                     temp = self.dataset_features[self.dataset[:, 42] == testing , :]
-                elif self.dataset_name == 'SCADA':
+                elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == testing , 0: 10]
                
                 temp_size = np.size(temp, axis = 0)
@@ -166,10 +172,10 @@ class DatasetHandler:
                 self.testing_dataset[testing] = temp[0:temp_size, :]
                 self.testing_instances_count[testing] = temp_size
         
-        if self.dataset_name == 'kdd':     
+        if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd': 
             self.number_of_features = np.size(self.dataset_features, axis = 1)
             del self.dataset
-        elif self.dataset_name == 'SCADA':     
+        elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':     
             self.number_of_features = 10
             del self.dataset
         else:
@@ -209,7 +215,7 @@ class DatasetHandler:
             
         return pairs, targets
 
-    def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes):
+    def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes, classes):
         print(file_name)
         temp_file = pd.read_csv(file_name, header=None).values
         n_correct = 0
@@ -229,6 +235,7 @@ class DatasetHandler:
         for i in range(testing_batch_size):
             if np.size(temp_file, axis = 0) == i:
                 print('break at {}'.format(i))
+                testing_batch_size = i+1
                 break
             
             votes = np.zeros((no_of_classes,1))
@@ -242,70 +249,53 @@ class DatasetHandler:
                 temp = temp_line[2 + mm*(2*no_of_classes) :2 + (mm+1)*(2*no_of_classes)]
                 
                 support_set_1 = np.zeros((no_of_classes, self.number_of_features)) 
-                #support_set_2 = np.zeros((5, self.number_of_features)) 
                 
                 targets = np.zeros((no_of_classes,))   
                 for ci in range(no_of_classes):
                     support_set_1[ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
-                    #support_set_2[0,:] = self.training_reps[temp[0].strip()][0,:]
                     targets[ci] = temp_line[0].strip() != temp[2*ci].strip()
                     
-#                support_set_1[1,:] = self.dataset_all[temp[2].strip()][int(temp[3]), :]
-#                #support_set_2[1,:] = self.training_reps[temp[2].strip()][0,:]
-#                targets[1] = temp_line[0].strip() != temp[2].strip()
-#                
-#                support_set_1[2,:] = self.dataset_all[temp[4].strip()][int(temp[5]), :]
-#                #support_set_2[2,:] = self.training_reps[temp[4].strip()][0,:]
-#                targets[2] = temp_line[0].strip() != temp[4].strip()
-#                
-#                support_set_1[3,:] = self.dataset_all[temp[6].strip()][int(temp[7]), :]
-#                #support_set_2[3,:] = self.training_reps[temp[6].strip()][0,:]
-#                targets[3] = temp_line[0].strip() != temp[6].strip()
-#                
-#                support_set_1[4,:] = self.dataset_all[temp[8].strip()][int(temp[9]), :]
-#                #support_set_2[4,:] = self.training_reps[temp[8].strip()][0,:]
-#                targets[4] = temp_line[0].strip() != temp[8].strip()
-                
                 modes_probs = model.predict([test_pair,support_set_1])
 
                 votes[modes_probs == modes_probs[np.argmin(modes_probs)]] += 1
                 probs += modes_probs
-                #print(probs)
+
                 if mm == 0:
                     if targets[np.argmin(probs)] == 0:
                         n_correct_first_pair+=1
             
                 if (mm + 1) in n_correct_variable_pairs:
-#                    prob_temp = probs/(mm+1)
-#                    if targets[np.argmin(prob_temp)] == 0:
-#                        n_correct_variable_pairs[mm+1] += 1
                     if targets[np.argmax(votes)] == 0:
                         n_correct_variable_pairs[mm+1]+=1
             probs/=30
-            #print(n_correct)
-#            if len(np.unique(probs)) != 5:
-#                print(probs)
+
             if targets[np.argmin(probs)] == 0:
                 n_correct+=1
             else:
                 key = temp_line[0].strip() + '_' + str(np.argmin(probs))
+                key_temp = temp_line[0].strip() + '_' + str(classes[np.argmin(probs)])
                 if key not in mis_classified: 
                     mis_classified[key] = 0
-
+                if key_temp not in mis_classified:
+                    mis_classified[key_temp] = 0
+                    
                 mis_classified[key] += 1
+                mis_classified[key_temp] += 1
                 
             if targets[np.argmax(votes)] == 0:
                 n_correct_voting += 1
             else:
                 key = temp_line[0].strip() + '_' + str(np.argmax(votes))
+                key_temp = temp_line[0].strip() + '_' + str(classes[np.argmax(votes)])
                 if key not in mis_classified_voting: 
                     mis_classified_voting[key] = 0
+                
+                if key_temp not in mis_classified_voting: 
+                    mis_classified_voting[key_temp] = 0
 
                 mis_classified_voting[key] += 1
+                mis_classified_voting[key_temp] += 1
                 
-            #probs = model.predict([test_pair,support_set_2])
-            #if targets[np.argmax(probs)] == 1:
-            #    n_correct_k_menas+=1
         accuracy_pairs = {}
         for key in n_correct_variable_pairs:
             accuracy_pairs[key] = n_correct_variable_pairs[key]/testing_batch_size
@@ -321,7 +311,7 @@ class DatasetHandler:
         
         return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting
     
-    def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day):
+    def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day, training_classes):
         print(file_name)
         temp_file = pd.read_csv(file_name, header=None).values
         n_correct_voting = {}
@@ -333,7 +323,6 @@ class DatasetHandler:
             
         no_of_known_classes = no_of_classes-1
       
-      
         for i in range(testing_batch_size):
             votes = {}
             for th in thresholds:
@@ -341,6 +330,7 @@ class DatasetHandler:
                 
             if np.size(temp_file, axis = 0) == i:
                 print('break at {}'.format(i))
+                testing_batch_size = i+1
                 break
             
             temp_line = temp_file[i, :]
@@ -359,6 +349,7 @@ class DatasetHandler:
                         support_set_1[index_ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
                         targets[index_ci] = temp_line[0].strip() != temp[2*ci].strip()    
                         index_ci += 1
+                        
                    
                 modes_probs = model.predict([test_pair,support_set_1])
                 for th in thresholds:
@@ -375,9 +366,17 @@ class DatasetHandler:
                     n_correct_voting[th] += 1
                 
                 key = temp_line[0].strip() + '_' + str(predicted_class)
+                key_temp = key
+                if predicted_class != -1:
+                    key_temp = temp_line[0].strip() + '_' + str(training_classes[predicted_class])
+                    
                 if key not in conf_matix[th]:
                     conf_matix[th][key] = 0
                 conf_matix[th][key] += 1
+                
+                if key_temp not in conf_matix[th]:
+                    conf_matix[th][key_temp] = 0
+                conf_matix[th][key_temp] += 1
                 
         
         accuracy = {}
