@@ -63,7 +63,23 @@ class SiameseNet:
             self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
             #self.convnet.add(Dropout(dropout_3))
             #self.convnet.add(Dense(units = 90, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            
+        elif dataset_name == 'CICIDS':
+            if network_id == 'CIC_New3':
+                dropout_1 = 0.1
+                dropout_2 = 0.05
+                lr = 0.0001
+                self.convnet.add(Dense(units = 25, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+                self.convnet.add(Dropout(dropout_1))
+                self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+                self.convnet.add(Dropout(dropout_2))
+                self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            else:    
+                self.convnet.add(Dense(units = 25, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+                self.convnet.add(Dropout(dropout_1))
+                self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+                self.convnet.add(Dropout(dropout_2))
+                self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+       
         elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
             self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
             self.convnet.add(Dropout(dropout_1))

@@ -166,9 +166,9 @@ class Arguments:
             self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv'
             self.network_id = 'SCADA_0'
             #self.max_from_class = 157
-        elif self.dataset_name == 'CICIDS2017':
-            self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/CICIDS2017_10Percent/'
-            self.network_id = 'CICIDS2017_0'
+        elif self.dataset_name == 'CICIDS':
+            self.path = '/home/hananhindy/CICIDS'
+            self.network_id = 'CICIDS_0'
             #self.max_from_class = 2000
         elif self.dataset_name == 'nsl-kdd':
             self.path= '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt'

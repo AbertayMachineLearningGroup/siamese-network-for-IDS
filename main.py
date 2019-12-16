@@ -64,9 +64,9 @@ if __name__ == "__main__":
             
         wrapper = SiameseNet((dataset_handler.number_of_features,), args.network_id, args.dataset_name, args.verbose)
 
-        (inputs1, targets1) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/{}_{}_{}_Training_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index))
+        (inputs1, targets1) = dataset_handler.load_batch(args.batch_size, 'pairs/{}_{}_{}_Training_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index))
         if args.train_with_all:
-            (inputs_val, targets_val) = dataset_handler.load_batch(args.batch_size, '/home/hananhindy/{}_{}_{}_Validation_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
+            (inputs_val, targets_val) = dataset_handler.load_batch(args.batch_size, 'pairs/{}_{}_{}_Validation_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index))
         
         loss = np.zeros(args.niterations)
         validation_loss = np.zeros(args.niterations)
@@ -105,14 +105,14 @@ if __name__ == "__main__":
                     
                     plt.savefig('loss_Run_{}.png'.format(args.network_id))
                     accuracy1, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting = dataset_handler.evaluate_classisfication(
-                                                '/home/hananhindy/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
+                                                'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
                                                  wrapper.siamese_net, 
                                                  args.batch_size,
                                                  len(all_classes), 
                                                  all_classes)
                 else:
                     index_of_zero_day_category = all_classes.index([item for item in all_classes if item not in training_categories][0])
-                    accuracy_zero_day, conf_mat = dataset_handler.evaluate_zero_day_new('/home/hananhindy/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index),
+                    accuracy_zero_day, conf_mat = dataset_handler.evaluate_zero_day_new('pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index),
                                                                                               wrapper.siamese_net, 
                                                                                               args.batch_size,
                                                                                               len(all_classes),

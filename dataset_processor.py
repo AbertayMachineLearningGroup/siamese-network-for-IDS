@@ -11,6 +11,7 @@ import numpy.random as rng
 from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.cluster import KMeans
+from sklearn import preprocessing
 import uuid
 
 class DatasetHandler:
@@ -37,7 +38,70 @@ class DatasetHandler:
         elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
            self.dataset = pd.read_csv(path)
            self.dataset = self.dataset.dropna().values
-                       
+        elif dataset_name == 'CICIDS':
+           normal_path = path + '/biflow_Monday-WorkingHours_Fixed.csv'
+           hulk_path = path + '/new_biflow_Wednesday-WorkingHours_Hulk.csv'
+           golden_path = path + '/new_biflow_Wednesday-WorkingHours_GoldenEye.csv'
+           slowloris_path = path + '/new_biflow_Wednesday-WorkingHours_slowloris.csv'
+           slowhttps_path = path + '/new_biflow_Wednesday-WorkingHours_Slowhttptest.csv'
+           ddos_path = path +'/new_biflow_Friday-WorkingHours_DDoS.csv'
+           FTP_path = path + '/new_biflow_Tuesday-WorkingHours_FTP.csv'
+           #botnet_path = path + '/new_biflow_Friday-WorkingHours_Botnet.csv'
+           #portscan_path = path + '/new_biflow_Friday-WorkingHours_PortScan.csv'
+           SSH_path = path + '/new_biflow_Tuesday-WorkingHours_SSH.csv'
+           
+           col_to_drop = ['Unnamed: 0', 'ip_src', 'ip_dst', 'num_src_flows', 'src_ip_dst_prt_delta']
+#           col_to_drop = col_to_drop + ['bwd_num_pkts',
+#             'bwd_mean_iat',
+#             'fwd_std_iat',
+#             'bwd_std_iat',
+#             'fwd_max_iat',
+#             'bwd_max_iat',
+#             'bwd_mean_offset',
+#             'fwd_max_pkt_len',
+#             'fwd_num_bytes',
+#             'bwd_num_bytes',
+#             'bwd_num_psh_flags']
+           
+           self.dataset_dictionary = {}  
+           self.dataset_dictionary['normal'] = pd.read_csv(normal_path).drop(col_to_drop, axis=1).values
+           standard_scaler = preprocessing.StandardScaler()
+           self.dataset_dictionary['normal'] = standard_scaler.fit_transform(self.dataset_dictionary['normal'])
+           
+#           self.dataset_dictionary['dos'] = pd.read_csv(hulk_path).append(pd.read_csv(golden_path)).append(pd.read_csv(slowloris_path)).append(pd.read_csv(slowhttps_path)).drop(col_to_drop, axis=1).values
+#           self.dataset_dictionary['dos'] = standard_scaler.transform(self.dataset_dictionary['dos'])
+
+           #self.dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).drop(col_to_drop, axis=1).values
+           #self.dataset_dictionary['heartbleed'] = standard_scaler.transform(self.dataset_dictionary['heartbleed'])
+           
+           #self.dataset_dictionary['botnet'] = pd.read_csv(botnet_path).drop(col_to_drop, axis=1).values
+           #self.dataset_dictionary['botnet'] = standard_scaler.transform(self.dataset_dictionary['botnet'])
+
+           #self.dataset_dictionary['portscan'] = pd.read_csv(portscan_path).drop(col_to_drop, axis=1).values
+           #self.dataset_dictionary['portscan'] = standard_scaler.transform(self.dataset_dictionary['portscan'])
+           
+           self.dataset_dictionary['hulk'] = pd.read_csv(hulk_path).drop(col_to_drop, axis=1).values
+           self.dataset_dictionary['hulk'] = standard_scaler.transform(self.dataset_dictionary['hulk'])
+#
+#           self.dataset_dictionary['golden'] = pd.read_csv(golden_path).drop(col_to_drop, axis=1).values
+#           self.dataset_dictionary['golden'] = standard_scaler.transform(self.dataset_dictionary['golden'])
+#
+           self.dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).drop(col_to_drop, axis=1).values
+           self.dataset_dictionary['slowloris'] = standard_scaler.transform(self.dataset_dictionary['slowloris'])
+#
+#           self.dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).drop(col_to_drop, axis=1).values
+#           self.dataset_dictionary['slowhttps'] = standard_scaler.transform(self.dataset_dictionary['slowhttps'])
+
+#           self.dataset_dictionary['ddos'] = pd.read_csv(ddos_path).drop(col_to_drop, axis=1).values
+#           self.dataset_dictionary['ddos'] = standard_scaler.transform(self.dataset_dictionary['ddos'])
+            
+           self.dataset_dictionary['ftp'] = pd.read_csv(FTP_path).drop(col_to_drop, axis=1).values
+           self.dataset_dictionary['ftp'] = standard_scaler.transform(self.dataset_dictionary['ftp'])
+            
+           self.dataset_dictionary['ssh'] = pd.read_csv(SSH_path).drop(col_to_drop, axis=1).values
+           self.dataset_dictionary['ssh'] = standard_scaler.transform(self.dataset_dictionary['ssh'])
+           
+
     def add_kdd_main_classes(self, verbose):
         base_classes_map = {}
         base_classes_map['normal'] =  'normal'
@@ -76,7 +140,7 @@ class DatasetHandler:
         if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
             temp = np.unique(self.dataset[:, 42])
             temp[0], temp[1] = temp[1], temp[0]
-        elif self.dataset_name == 'STA':
+        elif self.dataset_name == 'STA' or self.dataset_name == 'CICIDS':
             temp = [*self.dataset_dictionary.keys()]
         elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
             temp = np.unique(self.dataset[:, 12])
@@ -103,7 +167,7 @@ class DatasetHandler:
             self.dataset[:, 2] = label_encoder_2.fit_transform(self.dataset[:, 2])        
             self.dataset[:, 3] = label_encoder_3.fit_transform(self.dataset[:, 3])
             self.dataset_features = one_hot_encoder.fit_transform(self.dataset[:, :-2]).toarray()
-        
+            
         self.training_dataset = {}
         self.testing_dataset = {}
         self.training_instances_count = {} 
@@ -116,7 +180,7 @@ class DatasetHandler:
         if training_categories == testing_categories:
             print('\nTraining:Testing 80%:20%\n')
             for category in training_categories:
-                if self.dataset_name == 'STA':
+                if self.dataset_name == 'STA' or self.dataset_name == 'CICIDS':
                     temp = self.dataset_dictionary[category]
                 elif self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
                     temp = self.dataset_features[self.dataset[:, 42] == category , :]
@@ -131,6 +195,8 @@ class DatasetHandler:
                 testing_end_index = int(testing_start_index + (0.2 * temp_size))
                 self.dataset_all[category] = temp
                 self.dataset_all_count[category] = np.size(temp, axis = 0)
+                print(category)
+                print(self.dataset_all_count[category])
                 #self.training_dataset[category] = np.append(temp[0:testing_start_index, :], temp[testing_end_index: temp_size, :], axis = 0)
                 #self.testing_dataset[category] = temp[testing_start_index:testing_end_index, :]
                 #self.training_instances_count[category] = np.size(self.training_dataset[category], axis = 0)
@@ -145,6 +211,9 @@ class DatasetHandler:
                     temp = self.dataset_features[self.dataset[:, 42] == training , :]
                 elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == training , 0: 10]
+                elif self.dataset_name == 'CICIDS':
+                     temp = self.dataset_dictionary[training]
+
 
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
@@ -161,7 +230,9 @@ class DatasetHandler:
                     temp = self.dataset_features[self.dataset[:, 42] == testing , :]
                 elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == testing , 0: 10]
-               
+                elif self.dataset_name == 'CICIDS':
+                    temp = self.dataset_dictionary[testing]
+                     
                 temp_size = np.size(temp, axis = 0)
                 if max_instances_count != -1:
                     temp_size = min(temp_size, max_instances_count)      
@@ -209,6 +280,7 @@ class DatasetHandler:
                 print('break at {}'.format(i))
                 break
             temp = temp_file[i, :]
+            
             pairs[0][i, :] = self.dataset_all[temp[0].strip()][int(temp[1]), :].reshape(self.number_of_features)
             pairs[1][i, :] = self.dataset_all[temp[2].strip()][int(temp[3]), :].reshape(self.number_of_features)
             targets[i] = temp[0].strip() == temp[2].strip()
@@ -242,7 +314,6 @@ class DatasetHandler:
             
             temp_line = temp_file[i, :]
             probs = np.zeros((no_of_classes,1))
-            
             test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*no_of_classes).reshape(no_of_classes, self.number_of_features)
 
             for mm in range(30):

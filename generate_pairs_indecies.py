@@ -79,22 +79,51 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
             print('"{}" has {} instances'.
                   format(c, instances_count[c]))
     
-    elif dataset_name == 'STA':
-        normal_path = path + '/11jun.10percentNormalno_syn.csv'
-        dos_path = path + '/14jun.10percentAttackno_syn.csv'
-        ddos_path = path + '/15jun.10percentAttackno_syn.csv'
-        
+    elif dataset_name == 'CICIDS':
+    
+        normal_path = path + '/biflow_Monday-WorkingHours_Fixed.csv'
+        hulk_path = path + '/new_biflow_Wednesday-WorkingHours_Hulk.csv'
+        golden_path = path + '/new_biflow_Wednesday-WorkingHours_GoldenEye.csv'
+        slowloris_path = path + '/new_biflow_Wednesday-WorkingHours_slowloris.csv'
+        heartbleed_path = path + '/new_biflow_Wednesday-WorkingHours_Heartbleed.csv'
+        slowhttps_path = path + '/new_biflow_Wednesday-WorkingHours_Slowhttptest.csv'
+        FTP_path = path + '/new_biflow_Tuesday-WorkingHours_FTP.csv'
+        botnet_path = path + '/new_biflow_Friday-WorkingHours_Botnet.csv'
+        portscan_path = path + '/new_biflow_Friday-WorkingHours_PortScan.csv'
+        ddos_path = path +'/new_biflow_Friday-WorkingHours_DDoS.csv'
+        SSH_path = path + '/new_biflow_Tuesday-WorkingHours_SSH.csv'
         dataset_dictionary = {}  
-        dataset_dictionary['normal'] = pd.read_csv(normal_path, header = None).values
-        dataset_dictionary['dos'] = pd.read_csv(dos_path, header = None).values
-        dataset_dictionary['ddos'] = pd.read_csv(ddos_path, header = None).values
-        original_classes = ['normal', 'dos', 'ddos']
+        dataset_dictionary['normal'] = pd.read_csv(normal_path).values
+
+        #dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
+        #dataset_dictionary['golden'] = pd.read_csv(golden_path).values
+        #dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
+#        dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).values
+        #dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).values
+#        dataset_dictionary['ddos'] = pd.read_csv(ddos_path).values
+        
+        #dataset_dictionary['dos'] = pd.read_csv(hulk_path).append(pd.read_csv(golden_path)).append(pd.read_csv(slowloris_path)).append(pd.read_csv(slowhttps_path)).values
+        dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
+        #dataset_dictionary['golden'] = pd.read_csv(golden_path).values
+        dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
+        #dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).values
+        
+        #dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).values
+        #dataset_dictionary['botnet'] = pd.read_csv(botnet_path).values
+        #dataset_dictionary['portscan'] = pd.read_csv(portscan_path).values
+        #dataset_dictionary['ddos'] = pd.read_csv(ddos_path).values
+        dataset_dictionary['ftp'] = pd.read_csv(FTP_path).values
+        dataset_dictionary['ssh'] = pd.read_csv(SSH_path).values
+
+        original_classes = ['normal', 'hulk', 'slowloris', 'ftp', 'ssh']
+        #original_classes = ['normal', 'dos',  'ddos', 'ftp']
         instances_count = {}
 
         for c in original_classes:
             instances_count[c] = np.size(dataset_dictionary[c], axis=0)
             print('"{}" has {} instances'.
                   format(c, instances_count[c]))
+    
     
     classes = original_classes.copy()
     all_conbinations = list(itertools.combinations(original_classes, number_of_classes_for_training))
@@ -243,15 +272,16 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
                         
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset_name', dest='dataset_name', default='nsl-kdd')
+    args.add_argument('--dataset_name', dest='dataset_name', default='CICIDS')
     args.add_argument('--number_of_pairs', dest='number_of_pairs', default=30000)
     args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 4)
-    args.add_argument('--comb_index', dest='comb_index', default=0, type= int)
+    args.add_argument('--comb_index', dest='comb_index', default=3, type= int)
     args.add_argument('--one_shot', dest='one_shot', default=True)
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed')
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv')
-    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt')
+    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt')
+    args.add_argument('--path', dest='path', default='/home/hananhindy/CICIDS')
     args_values = args.parse_args() 
     
     generate_pairs(args_values.dataset_name, args_values.path, args_values.number_of_pairs, args_values.number_of_training_classes, args_values.comb_index, args_values.one_shot)    
