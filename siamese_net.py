@@ -7,15 +7,14 @@ Created on Thu Nov 15 12:19:36 2018
 """
 # based on the implementation in https://github.com/sorenbouma/keras-oneshot
 
-from keras.layers import Input, Dense, Lambda, Dropout, BatchNormalization, Activation
+from keras.layers import Input, Dense, Lambda, Dropout
 from keras.models import Model, Sequential
 from keras import backend as K
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam
 from keras.regularizers import l2
-import numpy.random as rng
 
 class SiameseNet:
-    def __init__(self, input_shape, network_id = 'kdd_0', dataset_name = 'kdd', verbose = True):
+    def __init__(self, input_shape, network_id = 'new_archi_lr_0_0001', dataset_name = 'kdd', verbose = True):
         
         self.left_input = Input(input_shape)
         self.right_input = Input(input_shape)
@@ -122,15 +121,6 @@ class SiameseNet:
         if verbose:
             print('Siamese Network Created\n')
             
-#    def b_init(self, shape,name=None):
-#        """Initialize bias as in paper"""
-#        values=rng.normal(loc=0.5,scale=1e-2,size=shape)
-#        return K.variable(values,name=name)
-#    
-#    def W_init(self, shape,name=None):
-#        """Initialize weights as in paper"""
-#        values = rng.normal(loc=0,scale=1e-2,size=shape)
-#        return K.variable(values,name=name)
     
     def euclidean_distance(self, vects):
         x, y = vects

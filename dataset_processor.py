@@ -13,6 +13,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.cluster import KMeans
 from sklearn import preprocessing
 import uuid
+import csv
 
 class DatasetHandler:
     def __init__(self, path, dataset_name, verbose = True):
@@ -287,7 +288,35 @@ class DatasetHandler:
             
         return pairs, targets
 
-    def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes, classes):
+    def append_to_confusion_matrix(self, cm, key1, key2):
+        if key1 not in cm: 
+            cm[key1] = 0
+        if key2 not in cm: 
+            cm[key2] = 0   
+        cm[key1] += 1
+        cm[key2] += 1
+
+        return cm
+    
+    def write_accuracies(self, filename, accuracy_prob, accuracy_first_pair, accuracy_voting):
+        with open(filename, "a") as file_writer:
+            file_writer.write('accuracy probs ,' + str(accuracy_prob) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
+
+    def write_diff_pairs_accuracies(self, filename, accuracy_pairs):
+        with open(filename, "a") as file_writer:
+            file_writer.write('accuracy with differnt number of pairs\n')
+            w = csv.DictWriter(file_writer, accuracy_pairs.keys())
+            w.writeheader()
+            w.writerow(accuracy_pairs)
+
+    def write_confusion_matrix(self, filename, matrix, text):
+        with open(filename, "a") as file_writer:
+            file_writer.write(text+'\n')
+            w = csv.DictWriter(file_writer, matrix.keys())
+            w.writeheader()
+            w.writerow(matrix)
+            
+    def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes, classes, output_file):
         print(file_name)
         temp_file = pd.read_csv(file_name, header=None).values
         n_correct = 0
@@ -301,8 +330,14 @@ class DatasetHandler:
         
         n_correct_voting = 0
         
+        mis_classified_voting_5 = {}
+        mis_classified_voting_10 = {}
+        mis_classified_voting_15 = {}
+        mis_classified_voting_20 = {}
+        mis_classified_voting_25 = {}
         mis_classified_voting = {}
-        mis_classified = {}
+        
+        mis_classified_prob = {}
         
         for i in range(testing_batch_size):
             if np.size(temp_file, axis = 0) == i:
@@ -338,34 +373,35 @@ class DatasetHandler:
                 if (mm + 1) in n_correct_variable_pairs:
                     if targets[np.argmax(votes)] == 0:
                         n_correct_variable_pairs[mm+1]+=1
+
+                    key = temp_line[0].strip() + '_' + str(np.argmax(votes))
+                    key_temp = temp_line[0].strip() + '_' + str(classes[np.argmax(votes)])
+                    if (mm + 1) == 5:
+                        mis_classified_voting_5 = self.append_to_confusion_matrix(mis_classified_voting_5, key, key_temp)
+                    elif (mm + 1) == 10:
+                        mis_classified_voting_10 = self.append_to_confusion_matrix(mis_classified_voting_10, key, key_temp)
+                    elif (mm + 1) == 15:
+                        mis_classified_voting_15 = self.append_to_confusion_matrix(mis_classified_voting_15, key, key_temp)
+                    elif (mm + 1) == 20:
+                        mis_classified_voting_20 = self.append_to_confusion_matrix(mis_classified_voting_20, key, key_temp)
+                    elif (mm + 1) == 25:
+                        mis_classified_voting_25 = self.append_to_confusion_matrix(mis_classified_voting_25, key, key_temp)
+   
             probs/=30
 
             if targets[np.argmin(probs)] == 0:
                 n_correct+=1
-            else:
-                key = temp_line[0].strip() + '_' + str(np.argmin(probs))
-                key_temp = temp_line[0].strip() + '_' + str(classes[np.argmin(probs)])
-                if key not in mis_classified: 
-                    mis_classified[key] = 0
-                if key_temp not in mis_classified:
-                    mis_classified[key_temp] = 0
-                    
-                mis_classified[key] += 1
-                mis_classified[key_temp] += 1
+
+            key = temp_line[0].strip() + '_' + str(np.argmin(probs))
+            key_temp = temp_line[0].strip() + '_' + str(classes[np.argmin(probs)])
+            mis_classified_prob = self.append_to_confusion_matrix(mis_classified_prob, key, key_temp)                
                 
             if targets[np.argmax(votes)] == 0:
                 n_correct_voting += 1
-            else:
-                key = temp_line[0].strip() + '_' + str(np.argmax(votes))
-                key_temp = temp_line[0].strip() + '_' + str(classes[np.argmax(votes)])
-                if key not in mis_classified_voting: 
-                    mis_classified_voting[key] = 0
+            key = temp_line[0].strip() + '_' + str(np.argmax(votes))
+            key_temp = temp_line[0].strip() + '_' + str(classes[np.argmax(votes)])
+            mis_classified_voting = self.append_to_confusion_matrix(mis_classified_voting, key, key_temp)
                 
-                if key_temp not in mis_classified_voting: 
-                    mis_classified_voting[key_temp] = 0
-
-                mis_classified_voting[key] += 1
-                mis_classified_voting[key_temp] += 1
                 
         accuracy_pairs = {}
         for key in n_correct_variable_pairs:
@@ -380,7 +416,21 @@ class DatasetHandler:
         
         accuracy_voting = (100.0*n_correct_voting / testing_batch_size)
         
-        return accuracy, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting
+        
+        self.write_accuracies(output_file, accuracy, accuracy_first_pair, accuracy_voting)
+        self.write_diff_pairs_accuracies(output_file, accuracy_pairs)
+        
+        self.write_confusion_matrix(output_file, mis_classified_prob, 'misclassified using probs (30 pairs)')
+        
+        self.write_confusion_matrix(output_file, mis_classified_voting_5, 'misclassified using voting (5 pairs)')
+        self.write_confusion_matrix(output_file, mis_classified_voting_10, 'misclassified using voting (10 pairs)')
+        self.write_confusion_matrix(output_file, mis_classified_voting_15, 'misclassified using voting (15 pairs)')
+        self.write_confusion_matrix(output_file, mis_classified_voting_20, 'misclassified using voting (20 pairs)')
+        self.write_confusion_matrix(output_file, mis_classified_voting_25, 'misclassified using voting (25 pairs)')
+        
+        self.write_confusion_matrix(output_file, mis_classified_voting, 'misclassified using voting (30 pairs)')
+        
+        return accuracy, accuracy_first_pair, mis_classified_prob, accuracy_pairs, accuracy_voting, mis_classified_voting
     
     def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day, training_classes):
         print(file_name)

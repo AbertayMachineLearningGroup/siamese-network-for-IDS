@@ -104,12 +104,12 @@ if __name__ == "__main__":
                     plt.legend([training_plot, val_plot], ['Training Loss', 'Validation Loss'])
                     
                     plt.savefig('loss_Run_{}.png'.format(args.network_id))
-                    accuracy1, accuracy_first_pair, mis_classified, accuracy_pairs, accuracy_voting, mis_classified_voting = dataset_handler.evaluate_classisfication(
-                                                'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
-                                                 wrapper.siamese_net, 
-                                                 args.batch_size,
-                                                 len(all_classes), 
-                                                 all_classes)
+                    dataset_handler.evaluate_classisfication(
+                                    'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
+                                     wrapper.siamese_net, 
+                                     args.batch_size,
+                                     len(all_classes), 
+                                     all_classes, args.output_file_name)
                 else:
                     index_of_zero_day_category = all_classes.index([item for item in all_classes if item not in training_categories][0])
                     accuracy_zero_day, conf_mat = dataset_handler.evaluate_zero_day_new('pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index),
@@ -121,20 +121,21 @@ if __name__ == "__main__":
 
                 with open(args.output_file_name, "a") as file_writer:
                     if args.train_with_all or args.test_vs_all:
-                        file_writer.write('accuracy probs ,' + str(accuracy1) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
-                        file_writer.write('accuracy with differnt number of pairs\n')
-                        w = csv.DictWriter(file_writer, accuracy_pairs.keys())
-                        w.writeheader()
-                        w.writerow(accuracy_pairs)
-                        file_writer.write('misclassified using probs (30 pairs)\n')
-                        w = csv.DictWriter(file_writer, mis_classified.keys())
-                        w.writeheader()
-                        w.writerow(mis_classified)
-                        
-                        file_writer.write('misclassified using voting (30 pairs)\n')
-                        w = csv.DictWriter(file_writer, mis_classified_voting.keys())
-                        w.writeheader()
-                        w.writerow(mis_classified_voting)
+                        print("Temp")
+#                        file_writer.write('accuracy probs ,' + str(accuracy1) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
+#                        file_writer.write('accuracy with differnt number of pairs\n')
+#                        w = csv.DictWriter(file_writer, accuracy_pairs.keys())
+#                        w.writeheader()
+#                        w.writerow(accuracy_pairs)
+#                        file_writer.write('misclassified using probs (30 pairs)\n')
+#                        w = csv.DictWriter(file_writer, mis_classified.keys())
+#                        w.writeheader()
+#                        w.writerow(mis_classified)
+#                        
+#                        file_writer.write('misclassified using voting (30 pairs)\n')
+#                        w = csv.DictWriter(file_writer, mis_classified_voting.keys())
+#                        w.writeheader()
+#                        w.writerow(mis_classified_voting)
                     else:
                         file_writer.write('accuracy = ,' + str(accuracy_zero_day)+ '\n')
                         thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
