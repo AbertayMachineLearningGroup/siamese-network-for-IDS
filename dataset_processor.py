@@ -329,6 +329,7 @@ class DatasetHandler:
         n_correct_variable_pairs[25] = 0
         
         n_correct_voting = 0
+        mis_classified_first_pair = {}
         
         mis_classified_voting_5 = {}
         mis_classified_voting_10 = {}
@@ -369,6 +370,10 @@ class DatasetHandler:
                 if mm == 0:
                     if targets[np.argmin(probs)] == 0:
                         n_correct_first_pair+=1
+                    key = temp_line[0].strip() + '_' + str(np.argmin(probs))
+                    key_temp = temp_line[0].strip() + '_' + str(classes[np.argmin(probs)])
+                    mis_classified_first_pair = self.append_to_confusion_matrix(mis_classified_first_pair, key, key_temp)
+                    
             
                 if (mm + 1) in n_correct_variable_pairs:
                     if targets[np.argmax(votes)] == 0:
@@ -430,6 +435,7 @@ class DatasetHandler:
         
         self.write_confusion_matrix(output_file, mis_classified_voting, 'misclassified using voting (30 pairs)')
         
+        self.write_confusion_matrix(output_file, mis_classified_first_pair, 'misclassified using first pair')
         return accuracy, accuracy_first_pair, mis_classified_prob, accuracy_pairs, accuracy_voting, mis_classified_voting
     
     def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day, training_classes):

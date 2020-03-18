@@ -12,6 +12,7 @@ from keras.models import Model, Sequential
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.regularizers import l2
+from keras.models import load_model
 
 class SiameseNet:
     def __init__(self, input_shape, network_id = 'new_archi_lr_0_0001', dataset_name = 'kdd', verbose = True):
@@ -145,3 +146,8 @@ class SiameseNet:
         '''
         return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
     
+    def load_saved_model(self, file_name):
+        self.siamese_net = load_model(file_name, custom_objects={'contrastive_loss': self.contrastive_loss, 'accuracy': self.accuracy, 'euclidean_distance': self.euclidean_distance, 'eucl_dist_output_shape': self.eucl_dist_output_shape})
+        
+        
+        

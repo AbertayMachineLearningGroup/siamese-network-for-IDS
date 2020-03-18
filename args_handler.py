@@ -87,6 +87,8 @@ class Arguments:
         self.use_sub_batches = False
         self.parser.add_argument('--use_sub_batches', type=str2bool, help = 'Use 3000 per batch')
 
+        self.network_path= ''
+        self.parser.add_argument('--network_path')
         
     def parse(self):
         args = self.parser.parse_args() 
@@ -151,6 +153,9 @@ class Arguments:
             
         if args.use_sub_batches != None:
             self.use_sub_batches = args.use_sub_batches
+        
+        if args.network_path!= None:
+            self.network_path = args.network_path
             
     
     def add_dataset_specific_defaults(self):
