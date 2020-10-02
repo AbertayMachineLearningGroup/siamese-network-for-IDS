@@ -63,7 +63,7 @@ class SiameseNet:
             self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
             #self.convnet.add(Dropout(dropout_3))
             #self.convnet.add(Dense(units = 90, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-        elif dataset_name == 'CICIDS':
+        elif dataset_name == 'CICIDS' or dataset_name == 'CICIDS2':
             if network_id == 'CIC_New3':
                 dropout_1 = 0.1
                 dropout_2 = 0.05
@@ -82,12 +82,12 @@ class SiameseNet:
        
         elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
             self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-            self.convnet.add(Dropout(dropout_1))
+  #          self.convnet.add(Dropout(dropout_1))
             self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
             if network_id != 'less_layers':
-            	self.convnet.add(Dropout(dropout_2))
-            	self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-            self.convnet.add(Dropout(dropout_3))
+ #           	self.convnet.add(Dropout(dropout_2))
+             	self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
+#            self.convnet.add(Dropout(dropout_3))
             self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
 
 #            self.convnet.add(Dropout(dropout_2))

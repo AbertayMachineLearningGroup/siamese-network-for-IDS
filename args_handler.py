@@ -89,7 +89,7 @@ class Arguments:
 
         self.network_path= ''
         self.parser.add_argument('--network_path')
-        
+               
     def parse(self):
         args = self.parser.parse_args() 
         if args.verbose != None:
@@ -156,7 +156,7 @@ class Arguments:
         
         if args.network_path!= None:
             self.network_path = args.network_path
-            
+                       
     
     def add_dataset_specific_defaults(self):
         if self.dataset_name == 'kdd':
@@ -171,7 +171,7 @@ class Arguments:
             self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv'
             self.network_id = 'SCADA_0'
             #self.max_from_class = 157
-        elif self.dataset_name == 'CICIDS':
+        elif self.dataset_name == 'CICIDS' or self.dataset_name == 'CICIDS2':
             self.path = '/home/hananhindy/CICIDS'
             self.network_id = 'CICIDS_0'
             #self.max_from_class = 2000

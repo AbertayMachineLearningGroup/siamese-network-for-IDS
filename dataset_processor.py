@@ -14,6 +14,7 @@ from sklearn.cluster import KMeans
 from sklearn import preprocessing
 import uuid
 import csv
+import math 
 
 class DatasetHandler:
     def __init__(self, path, dataset_name, verbose = True):
@@ -39,7 +40,7 @@ class DatasetHandler:
         elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
            self.dataset = pd.read_csv(path)
            self.dataset = self.dataset.dropna().values
-        elif dataset_name == 'CICIDS':
+        elif dataset_name == 'CICIDS' or dataset_name == 'CICIDS2':
            normal_path = path + '/biflow_Monday-WorkingHours_Fixed.csv'
            hulk_path = path + '/new_biflow_Wednesday-WorkingHours_Hulk.csv'
            golden_path = path + '/new_biflow_Wednesday-WorkingHours_GoldenEye.csv'
@@ -47,8 +48,9 @@ class DatasetHandler:
            slowhttps_path = path + '/new_biflow_Wednesday-WorkingHours_Slowhttptest.csv'
            ddos_path = path +'/new_biflow_Friday-WorkingHours_DDoS.csv'
            FTP_path = path + '/new_biflow_Tuesday-WorkingHours_FTP.csv'
-           #botnet_path = path + '/new_biflow_Friday-WorkingHours_Botnet.csv'
-           #portscan_path = path + '/new_biflow_Friday-WorkingHours_PortScan.csv'
+           heartbleed_path = path + '/new_biflow_Wednesday-WorkingHours_Heartbleed.csv'
+           botnet_path = path + '/new_biflow_Friday-WorkingHours_Botnet.csv'
+           portscan_path = path + '/new_biflow_Friday-WorkingHours_PortScan.csv'
            SSH_path = path + '/new_biflow_Tuesday-WorkingHours_SSH.csv'
            
            col_to_drop = ['Unnamed: 0', 'ip_src', 'ip_dst', 'num_src_flows', 'src_ip_dst_prt_delta']
@@ -72,24 +74,29 @@ class DatasetHandler:
 #           self.dataset_dictionary['dos'] = pd.read_csv(hulk_path).append(pd.read_csv(golden_path)).append(pd.read_csv(slowloris_path)).append(pd.read_csv(slowhttps_path)).drop(col_to_drop, axis=1).values
 #           self.dataset_dictionary['dos'] = standard_scaler.transform(self.dataset_dictionary['dos'])
 
-           #self.dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).drop(col_to_drop, axis=1).values
-           #self.dataset_dictionary['heartbleed'] = standard_scaler.transform(self.dataset_dictionary['heartbleed'])
-           
-           #self.dataset_dictionary['botnet'] = pd.read_csv(botnet_path).drop(col_to_drop, axis=1).values
-           #self.dataset_dictionary['botnet'] = standard_scaler.transform(self.dataset_dictionary['botnet'])
+          
+           if dataset_name == 'CICIDS2':
+               self.dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).drop(col_to_drop, axis=1).values
+               self.dataset_dictionary['heartbleed'] = standard_scaler.transform(self.dataset_dictionary['heartbleed'])
+               self.dataset_dictionary['ddos'] = pd.read_csv(ddos_path).drop(col_to_drop, axis=1).values
+               self.dataset_dictionary['ddos'] = standard_scaler.transform(self.dataset_dictionary['ddos'])
 
-           #self.dataset_dictionary['portscan'] = pd.read_csv(portscan_path).drop(col_to_drop, axis=1).values
-           #self.dataset_dictionary['portscan'] = standard_scaler.transform(self.dataset_dictionary['portscan'])
+#               self.dataset_dictionary['botnet'] = pd.read_csv(botnet_path).drop(col_to_drop, axis=1).values
+#               self.dataset_dictionary['botnet'] = standard_scaler.transform(self.dataset_dictionary['botnet'])
+    
+               self.dataset_dictionary['portscan'] = pd.read_csv(portscan_path).drop(col_to_drop, axis=1).values
+               self.dataset_dictionary['portscan'] = standard_scaler.transform(self.dataset_dictionary['portscan'])
            
-           self.dataset_dictionary['hulk'] = pd.read_csv(hulk_path).drop(col_to_drop, axis=1).values
-           self.dataset_dictionary['hulk'] = standard_scaler.transform(self.dataset_dictionary['hulk'])
-#
+           if dataset_name == 'CICIDS':
+               self.dataset_dictionary['hulk'] = pd.read_csv(hulk_path).drop(col_to_drop, axis=1).values
+               self.dataset_dictionary['hulk'] = standard_scaler.transform(self.dataset_dictionary['hulk'])
+##
 #           self.dataset_dictionary['golden'] = pd.read_csv(golden_path).drop(col_to_drop, axis=1).values
 #           self.dataset_dictionary['golden'] = standard_scaler.transform(self.dataset_dictionary['golden'])
 #
-           self.dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).drop(col_to_drop, axis=1).values
-           self.dataset_dictionary['slowloris'] = standard_scaler.transform(self.dataset_dictionary['slowloris'])
-#
+               self.dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).drop(col_to_drop, axis=1).values
+               self.dataset_dictionary['slowloris'] = standard_scaler.transform(self.dataset_dictionary['slowloris'])
+##
 #           self.dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).drop(col_to_drop, axis=1).values
 #           self.dataset_dictionary['slowhttps'] = standard_scaler.transform(self.dataset_dictionary['slowhttps'])
 
@@ -101,7 +108,7 @@ class DatasetHandler:
             
            self.dataset_dictionary['ssh'] = pd.read_csv(SSH_path).drop(col_to_drop, axis=1).values
            self.dataset_dictionary['ssh'] = standard_scaler.transform(self.dataset_dictionary['ssh'])
-           
+#           
 
     def add_kdd_main_classes(self, verbose):
         base_classes_map = {}
@@ -141,7 +148,7 @@ class DatasetHandler:
         if self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
             temp = np.unique(self.dataset[:, 42])
             temp[0], temp[1] = temp[1], temp[0]
-        elif self.dataset_name == 'STA' or self.dataset_name == 'CICIDS':
+        elif self.dataset_name == 'STA' or self.dataset_name == 'CICIDS' or self.dataset_name == 'CICIDS2':
             temp = [*self.dataset_dictionary.keys()]
         elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
             temp = np.unique(self.dataset[:, 12])
@@ -152,6 +159,14 @@ class DatasetHandler:
                 temp.remove('2 Floating objects')
                 temp.remove('Plastic bag')
                 temp.remove('Sensor Failure')
+                temp.remove('Blocked measure 1')
+                temp.remove('Blocked measure 2')
+                temp.remove('Humidity')
+                temp.remove('Person htting low intensity')
+                temp.remove('Person htting med intensity')
+                temp.remove('Person htting high intensity')
+                temp.remove('Wrong connection')
+                
         return temp
     
     def encode_split(self, training_categories, testing_categories, max_instances_count = -1, k_fold = 0, verbose = True):
@@ -181,7 +196,7 @@ class DatasetHandler:
         if training_categories == testing_categories:
             print('\nTraining:Testing 80%:20%\n')
             for category in training_categories:
-                if self.dataset_name == 'STA' or self.dataset_name == 'CICIDS':
+                if self.dataset_name == 'STA' or self.dataset_name == 'CICIDS' or self.dataset_name == 'CICIDS2':
                     temp = self.dataset_dictionary[category]
                 elif self.dataset_name == 'kdd' or self.dataset_name == 'nsl-kdd':
                     temp = self.dataset_features[self.dataset[:, 42] == category , :]
@@ -212,7 +227,7 @@ class DatasetHandler:
                     temp = self.dataset_features[self.dataset[:, 42] == training , :]
                 elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == training , 0: 10]
-                elif self.dataset_name == 'CICIDS':
+                elif self.dataset_name == 'CICIDS' or self.dataset_name == 'CICIDS2':
                      temp = self.dataset_dictionary[training]
 
 
@@ -231,7 +246,7 @@ class DatasetHandler:
                     temp = self.dataset_features[self.dataset[:, 42] == testing , :]
                 elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
                     temp = self.dataset[self.dataset[:, 12] == testing , 0: 10]
-                elif self.dataset_name == 'CICIDS':
+                elif self.dataset_name == 'CICIDS'  or self.dataset_name == 'CICIDS2':
                     temp = self.dataset_dictionary[testing]
                      
                 temp_size = np.size(temp, axis = 0)
@@ -317,7 +332,7 @@ class DatasetHandler:
             w.writerow(matrix)
             
     def evaluate_classisfication(self, file_name, model, testing_batch_size, no_of_classes, classes, output_file):
-        print(file_name)
+        print(no_of_classes)
         temp_file = pd.read_csv(file_name, header=None).values
         n_correct = 0
         n_correct_first_pair = 0
@@ -374,7 +389,7 @@ class DatasetHandler:
                     key_temp = temp_line[0].strip() + '_' + str(classes[np.argmin(probs)])
                     mis_classified_first_pair = self.append_to_confusion_matrix(mis_classified_first_pair, key, key_temp)
                     
-            
+                    
                 if (mm + 1) in n_correct_variable_pairs:
                     if targets[np.argmax(votes)] == 0:
                         n_correct_variable_pairs[mm+1]+=1
@@ -438,78 +453,97 @@ class DatasetHandler:
         self.write_confusion_matrix(output_file, mis_classified_first_pair, 'misclassified using first pair')
         return accuracy, accuracy_first_pair, mis_classified_prob, accuracy_pairs, accuracy_voting, mis_classified_voting
     
-    def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day, training_classes):
+    def evaluate_zero_day_new(self, file_name, model, testing_batch_size, no_of_classes, index_of_zero_day, training_classes, output_file):
         print(file_name)
         temp_file = pd.read_csv(file_name, header=None).values
-        n_correct_voting = {}
-        conf_matix = {}
-        thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-        for th in thresholds:
-            n_correct_voting[th] = 0
-            conf_matix [th] = {}
-            
-        no_of_known_classes = no_of_classes-1
-      
-        for i in range(testing_batch_size):
-            votes = {}
-            for th in thresholds:
-                votes[th] = np.zeros((no_of_known_classes,1))
-                
-            if np.size(temp_file, axis = 0) == i:
-                print('break at {}'.format(i))
-                testing_batch_size = i+1
-                break
-            
-            temp_line = temp_file[i, :]
-            
-            test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*no_of_known_classes).reshape(no_of_known_classes, self.number_of_features)
+#        output_file_org = output_file
 
-            for mm in range(30):
-                temp = temp_line[2 + mm*(2*no_of_classes) :2 + (mm+1)*(2*no_of_classes)]
+        number_of_instances_arr = [1, 5, 10, 15, 20, 25, 30]
+#        number_of_instances_arr = [30]
+        for number_of_instances in number_of_instances_arr:
+            with open(output_file, "a") as file_writer:
+                file_writer.write('----------------------------------'+ '\n')
+                file_writer.write('----------------------------------'+ '\n')                
+                file_writer.write('NUMBER OF PAIRS FROM EACH CLASS = {}'.format(number_of_instances)+ '\n')
                 
-                support_set_1 = np.zeros((no_of_known_classes, self.number_of_features)) 
+#            output_file = output_file_org.replace('.csv', '{}.csv'.format(number_of_instances))
+            n_correct_voting = {}
+            conf_matix = {}
+            thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+
+            for th in thresholds:
+                n_correct_voting[th] = 0
+                conf_matix [th] = {}
                 
-                targets = np.zeros((no_of_known_classes,))   
-                index_ci = 0
-                for ci in range(no_of_classes):
-                    if ci != index_of_zero_day:
-                        support_set_1[index_ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
-                        targets[index_ci] = temp_line[0].strip() != temp[2*ci].strip()    
-                        index_ci += 1
-                        
-                   
-                modes_probs = model.predict([test_pair,support_set_1])
+            no_of_known_classes = no_of_classes-1
+          
+            for i in range(testing_batch_size):
+                votes = {}
                 for th in thresholds:
-                    if modes_probs[np.argmin(modes_probs)] < th:
-                        votes[th][modes_probs == modes_probs[np.argmin(modes_probs)]] += 1
+                    votes[th] = np.zeros((no_of_known_classes,1))
+                    
+                if np.size(temp_file, axis = 0) == i:
+                    print('break at {}'.format(i))
+                    testing_batch_size = i+1
+                    break
+                
+                temp_line = temp_file[i, :]
+                
+                test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*no_of_known_classes).reshape(no_of_known_classes, self.number_of_features)
+    
+                for mm in range(number_of_instances):
+                    temp = temp_line[2 + mm*(2*no_of_classes) :2 + (mm+1)*(2*no_of_classes)]
+                    
+                    support_set_1 = np.zeros((no_of_known_classes, self.number_of_features)) 
+                    
+                    targets = np.zeros((no_of_known_classes,))   
+                    index_ci = 0
+                    for ci in range(no_of_classes):
+                        if ci != index_of_zero_day:
+                            support_set_1[index_ci,:] = self.dataset_all[temp[2*ci].strip()][int(temp[2*ci +1]), :]
+                            targets[index_ci] = temp_line[0].strip() != temp[2*ci].strip()    
+                            index_ci += 1
+                            
+                       
+                    modes_probs = model.predict([test_pair,support_set_1])
+                    for th in thresholds:
+                        if modes_probs[np.argmin(modes_probs)] < th:
+                            votes[th][modes_probs == modes_probs[np.argmin(modes_probs)]] += 1
+                    
+                for th in thresholds:
+                    predicted_class = -1
+                    if votes[th][np.argmax(votes[th])] >= (math.ceil(number_of_instances/3)):
+                        predicted_class = np.argmax(votes[th])
+                    
+                    if (predicted_class == -1 and np.all(targets) == 1) or (predicted_class >= 0 and targets[predicted_class] == 0):
+                        #correctly predicted
+                        n_correct_voting[th] += 1
+                    
+                    key = temp_line[0].strip() + '_' + str(predicted_class)
+                    key_temp = key
+                    if predicted_class != -1:
+                        key_temp = temp_line[0].strip() + '_' + str(training_classes[predicted_class])
+                        
+                    if key not in conf_matix[th]:
+                        conf_matix[th][key] = 0
+                    conf_matix[th][key] += 1
+                    
+                    if key_temp not in conf_matix[th]:
+                        conf_matix[th][key_temp] = 0
+                    conf_matix[th][key_temp] += 1
+                    
+            
+            accuracy = {}
+            for th in thresholds:
+                accuracy[th] = n_correct_voting[th]/testing_batch_size
+            
+            with open(output_file, "a") as file_writer:
+                file_writer.write('accuracy = ,' + str(accuracy)+ '\n')
                 
             for th in thresholds:
-                predicted_class = -1
-                if votes[th][np.argmax(votes[th])] >= 10:
-                    predicted_class = np.argmax(votes[th])
+                self.write_confusion_matrix(output_file, conf_matix[th], 'threshold = {}\n'.format(th))
                 
-                if (predicted_class == -1 and np.all(targets) == 1) or (predicted_class >= 0 and targets[predicted_class] == 0):
-                    #correctly predicted
-                    n_correct_voting[th] += 1
-                
-                key = temp_line[0].strip() + '_' + str(predicted_class)
-                key_temp = key
-                if predicted_class != -1:
-                    key_temp = temp_line[0].strip() + '_' + str(training_classes[predicted_class])
-                    
-                if key not in conf_matix[th]:
-                    conf_matix[th][key] = 0
-                conf_matix[th][key] += 1
-                
-                if key_temp not in conf_matix[th]:
-                    conf_matix[th][key_temp] = 0
-                conf_matix[th][key_temp] += 1
-                
-        
-        accuracy = {}
-        for th in thresholds:
-            accuracy[th] = n_correct_voting[th]/testing_batch_size
-        
+            
         return accuracy, conf_matix
     
     
@@ -542,7 +576,7 @@ class DatasetHandler:
             test_pair = np.asarray([self.dataset_all[temp_line[0].strip()][int(temp_line[1]), :]]*5).reshape(5, self.number_of_features)
             support_set_zero_day = np.zeros((5, self.number_of_features)) 
 
-            for k in range(5):
+            for k in range(30):
                 support_set_zero_day[k,:] = self.dataset_all[temp_line[0].strip()][zero_day_line[k], :]
             
             zero_day_probs = model.predict([test_pair, support_set_zero_day])

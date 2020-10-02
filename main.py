@@ -66,12 +66,23 @@ if __name__ == "__main__":
 
         if args.network_path != '':
             wrapper.load_saved_model(args.network_path)
-            dataset_handler.evaluate_classisfication(
-                                    'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
-                                     wrapper.siamese_net, 
-                                     args.batch_size,
-                                     len(all_classes), 
-                                     all_classes, args.output_file_name)
+            if args.train_with_all or args.test_vs_all:
+                dataset_handler.evaluate_classisfication(
+                                        'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size,args.comb_index),
+                                         wrapper.siamese_net, 
+                                         args.batch_size,
+                                         len(all_classes), 
+                                         all_classes, args.output_file_name)
+            else:
+                index_of_zero_day_category = all_classes.index([item for item in all_classes if item not in training_categories][0])
+                dataset_handler.evaluate_zero_day_new(
+                                        'pairs/{}_{}_{}_Classification_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index),
+                                        wrapper.siamese_net, 
+                                        args.batch_size,
+                                        len(all_classes),
+                                        index_of_zero_day_category, 
+                                        training_categories, 
+                                        args.output_file_name)
         else:
             (inputs1, targets1) = dataset_handler.load_batch(args.batch_size, 'pairs/{}_{}_{}_Training_Pairs.csv'.format(args.dataset_name, args.batch_size, args.comb_index))
             if args.train_with_all:
@@ -126,35 +137,9 @@ if __name__ == "__main__":
                                                                                                   args.batch_size,
                                                                                                   len(all_classes),
                                                                                                   index_of_zero_day_category, 
-                                                                                                  training_categories)
-    
-                    with open(args.output_file_name, "a") as file_writer:
-                        if args.train_with_all or args.test_vs_all:
-                            print("Temp")
-    #                        file_writer.write('accuracy probs ,' + str(accuracy1) + ',' + 'accuracy_with_one_pair,' +  str(accuracy_first_pair) + ',accuracy_voting,' + str(accuracy_voting) + "\n")
-    #                        file_writer.write('accuracy with differnt number of pairs\n')
-    #                        w = csv.DictWriter(file_writer, accuracy_pairs.keys())
-    #                        w.writeheader()
-    #                        w.writerow(accuracy_pairs)
-    #                        file_writer.write('misclassified using probs (30 pairs)\n')
-    #                        w = csv.DictWriter(file_writer, mis_classified.keys())
-    #                        w.writeheader()
-    #                        w.writerow(mis_classified)
-    #                        
-    #                        file_writer.write('misclassified using voting (30 pairs)\n')
-    #                        w = csv.DictWriter(file_writer, mis_classified_voting.keys())
-    #                        w.writeheader()
-    #                        w.writerow(mis_classified_voting)
-                        else:
-                            file_writer.write('accuracy = ,' + str(accuracy_zero_day)+ '\n')
-                            thresholds = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-    
-                            for th in thresholds:
-                                file_writer.write('threshold = {}\n'.format(th))
-                                w = csv.DictWriter(file_writer, conf_mat[th].keys())
-                                w.writeheader()
-                                w.writerow(conf_mat[th])                       
-                        
+                                                                                                  training_categories, 
+                                                                                                  args.output_file_name)    
+
     
             wrapper.siamese_net.save(os.path.join('/home/hananhindy/dump_networks/', '{}_{}_{}_{}'.format(args.dataset_name, args.comb_index, args.network_id, time.strftime("%Y%m%d-%H%M%S"))))
             
@@ -177,4 +162,3 @@ if __name__ == "__main__":
                 plt.xlabel('Iteration no')
                 plt.ylabel('Accuracy')
                 plt.legend([training_plot, val_plot], ['Training Acc', 'Validation Acc'])
-#            

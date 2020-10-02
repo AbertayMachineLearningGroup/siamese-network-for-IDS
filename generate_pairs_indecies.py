@@ -12,7 +12,7 @@ import numpy as np
 import itertools
 import random
                
-def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_for_training, comb_index, is_one_shot):
+def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_for_training, comb_index, is_one_shot, max_num_of_instances = 2000000):
     if dataset_name == 'kdd' or dataset_name == 'nsl-kdd':
         dataset = pd.read_csv(path, header=None)
         if dataset_name == 'kdd':
@@ -71,15 +71,22 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
             original_classes.remove('2 Floating objects')
             original_classes.remove('Plastic bag')
             original_classes.remove('Sensor Failure')
+            original_classes.remove('Blocked measure 1')
+            original_classes.remove('Blocked measure 2')
+            original_classes.remove('Humidity')
+            original_classes.remove('Person htting low intensity')
+            original_classes.remove('Person htting med intensity')
+            original_classes.remove('Person htting high intensity')
+            original_classes.remove('Wrong connection')
     
         instances_count = {}
 
         for c in original_classes:
-            instances_count[c] = np.size(dataset[dataset[:,12] == c, :], axis=0)
+            instances_count[c] = min(np.size(dataset[dataset[:,12] == c, :], axis=0), max_num_of_instances)
             print('"{}" has {} instances'.
                   format(c, instances_count[c]))
     
-    elif dataset_name == 'CICIDS':
+    elif dataset_name == 'CICIDS' or dataset_name == 'CICIDS2':
     
         normal_path = path + '/biflow_Monday-WorkingHours_Fixed.csv'
         hulk_path = path + '/new_biflow_Wednesday-WorkingHours_Hulk.csv'
@@ -94,29 +101,33 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
         SSH_path = path + '/new_biflow_Tuesday-WorkingHours_SSH.csv'
         dataset_dictionary = {}  
         dataset_dictionary['normal'] = pd.read_csv(normal_path).values
-
-        #dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
+        if dataset_name == 'CICIDS':
+            dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
         #dataset_dictionary['golden'] = pd.read_csv(golden_path).values
-        #dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
+            dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
 #        dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).values
         #dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).values
 #        dataset_dictionary['ddos'] = pd.read_csv(ddos_path).values
         
         #dataset_dictionary['dos'] = pd.read_csv(hulk_path).append(pd.read_csv(golden_path)).append(pd.read_csv(slowloris_path)).append(pd.read_csv(slowhttps_path)).values
-        dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
+        #dataset_dictionary['hulk'] = pd.read_csv(hulk_path).values
         #dataset_dictionary['golden'] = pd.read_csv(golden_path).values
-        dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
+        #dataset_dictionary['slowloris'] = pd.read_csv(slowloris_path).values
         #dataset_dictionary['slowhttps'] = pd.read_csv(slowhttps_path).values
         
-        #dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).values
-        #dataset_dictionary['botnet'] = pd.read_csv(botnet_path).values
-        #dataset_dictionary['portscan'] = pd.read_csv(portscan_path).values
+        if dataset_name == 'CICIDS2':
+            dataset_dictionary['heartbleed'] = pd.read_csv(heartbleed_path).values
+            #dataset_dictionary['botnet'] = pd.read_csv(botnet_path).values
+            dataset_dictionary['ddos'] = pd.read_csv(ddos_path).values
+            dataset_dictionary['portscan'] = pd.read_csv(portscan_path).values
         #dataset_dictionary['ddos'] = pd.read_csv(ddos_path).values
         dataset_dictionary['ftp'] = pd.read_csv(FTP_path).values
         dataset_dictionary['ssh'] = pd.read_csv(SSH_path).values
 
-        original_classes = ['normal', 'hulk', 'slowloris', 'ftp', 'ssh']
-        #original_classes = ['normal', 'dos',  'ddos', 'ftp']
+        if dataset_name == 'CICIDS':
+            original_classes = ['normal', 'hulk', 'slowloris', 'ftp', 'ssh']
+        elif dataset_name == 'CICIDS2':
+            original_classes = ['normal', 'heartbleed', 'ddos', 'portscan', 'ftp']
         instances_count = {}
 
         for c in original_classes:
@@ -272,16 +283,16 @@ def generate_pairs(dataset_name, path, total_number_of_pairs, number_of_classes_
                         
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset_name', dest='dataset_name', default='CICIDS')
-    args.add_argument('--number_of_pairs', dest='number_of_pairs', default=30000)
-    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 4)
-    args.add_argument('--comb_index', dest='comb_index', default=3, type= int)
+    args.add_argument('--dataset_name', dest='dataset_name', default='SCADA')
+    args.add_argument('--number_of_pairs', dest='number_of_pairs', default=28000)
+    args.add_argument('--number_of_training_classes', dest='number_of_training_classes', default = 13)
+    args.add_argument('--comb_index', dest='comb_index', default=13, type= int)
     args.add_argument('--one_shot', dest='one_shot', default=True)
     #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed')
-    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
-    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv')
-    #args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt')
-    args.add_argument('--path', dest='path', default='/home/hananhindy/CICIDS')
+#    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected')
+    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv')
+#    args.add_argument('--path', dest='path', default='/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt')
+#    args.add_argument('--path', dest='path', default='/home/hananhindy/CICIDS')
     args_values = args.parse_args() 
     
     generate_pairs(args_values.dataset_name, args_values.path, args_values.number_of_pairs, args_values.number_of_training_classes, args_values.comb_index, args_values.one_shot)    
