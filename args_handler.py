@@ -162,19 +162,12 @@ class Arguments:
         if self.dataset_name == 'kdd':
             self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/kddcup.data_10_percent_corrected'
             self.network_id = 'kdd_0'
-            #self.max_from_class = 1200
-        elif self.dataset_name == 'STA':
-            self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/STA2018_DatasetPreprocessed/'
-            self.network_id = 'STA_0'
-            #self.max_from_class = 642
         elif self.dataset_name == 'SCADA' or self.dataset_name == 'SCADA_Reduced':
             self.path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv'
             self.network_id = 'SCADA_0'
-            #self.max_from_class = 157
         elif self.dataset_name == 'CICIDS' or self.dataset_name == 'CICIDS2':
             self.path = '/home/hananhindy/CICIDS'
             self.network_id = 'CICIDS_0'
-            #self.max_from_class = 2000
         elif self.dataset_name == 'nsl-kdd':
             self.path= '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/KDDTrain+.txt'
             self.network_id = 'kdd_0'

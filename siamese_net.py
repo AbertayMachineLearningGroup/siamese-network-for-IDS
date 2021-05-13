@@ -47,78 +47,32 @@ class SiameseNet:
             self.convnet.add(Dense(units = 39, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
             self.convnet.add(Dropout(dropout_3))
             self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-        elif dataset_name == 'STA':
-            self.convnet.add(Dense(units = 510, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-            self.convnet.add(Dropout(dropout_1))
-            #self.convnet.add(Dense(units = 450, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            #self.convnet.add(Dropout(dropout_1))
-            self.convnet.add(Dense(units = 390, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            self.convnet.add(Dropout(dropout_2))
-            #self.convnet.add(Dense(units = 330, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            #self.convnet.add(Dropout(dropout_2))
-            self.convnet.add(Dense(units = 270, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            self.convnet.add(Dropout(dropout_3))
-            self.convnet.add(Dense(units = 210, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            self.convnet.add(Dropout(dropout_3))
-            self.convnet.add(Dense(units = 150, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            #self.convnet.add(Dropout(dropout_3))
-            #self.convnet.add(Dense(units = 90, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
         elif dataset_name == 'CICIDS' or dataset_name == 'CICIDS2':
-            if network_id == 'CIC_New3':
-                dropout_1 = 0.1
-                dropout_2 = 0.05
-                lr = 0.0001
-                self.convnet.add(Dense(units = 25, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-                self.convnet.add(Dropout(dropout_1))
-                self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-                self.convnet.add(Dropout(dropout_2))
-                self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-            else:    
-                self.convnet.add(Dense(units = 25, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-                self.convnet.add(Dropout(dropout_1))
-                self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-                self.convnet.add(Dropout(dropout_2))
-                self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
-       
+            dropout_1 = 0.1
+            dropout_2 = 0.05
+            lr = 0.0001
+            self.convnet.add(Dense(units = 25, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
+            self.convnet.add(Dropout(dropout_1))
+            self.convnet.add(Dense(units = 20, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
+            self.convnet.add(Dropout(dropout_2))
+            self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu'))
         elif dataset_name == 'SCADA' or dataset_name == 'SCADA_Reduced':
             self.convnet.add(Dense(units = 8, kernel_regularizer=l2(1e-2), kernel_initializer = 'uniform', activation = 'relu', input_shape = input_shape))
-#            self.convnet.add(Dropout(dropout_1))
-#            self.convnet.add(Dense(units = 15, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-            #if network_id != 'less_layers':
- #           	self.convnet.add(Dropout(dropout_2))
-             #	self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-#            self.convnet.add(Dropout(dropout_3))
-#            self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-
-#            self.convnet.add(Dropout(dropout_2))
-#            self.convnet.add(Dense(units = 10, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-#        self.convnet.add(Dropout(dropout_3))
-#        self.convnet.add(Dense(units = 5, kernel_regularizer=l2(1e-2),kernel_initializer =  'uniform',  activation = 'relu'))
-         
-        
-        
-        
+               
         #call the convnet Sequential model on each of the input tensors so params will be shared
         self.encoded_l = self.convnet(self.left_input)
         self.encoded_r = self.convnet(self.right_input)
         
         #layer to merge two encoded inputs with the l1 distance between them
-        #self.L1_layer = Lambda(lambda tensors:K.abs(tensors[0] - tensors[1]))
         self.L1_layer = Lambda(self.euclidean_distance, output_shape=self.eucl_dist_output_shape)
+        
         #call this layer on list of two input tensors.
         self.L1_distance = self.L1_layer([self.encoded_l, self.encoded_r])
-       # self.prediction = Dense(1,activation='sigmoid')(self.L1_distance)
         self.siamese_net = Model(inputs=[self.left_input,self.right_input],outputs=self.L1_distance)
         
-        #self.optimizer = Adam(0.00006)
         self.optimizer = Adam(lr)
-        #self.optimizer = RMSprop()
-        #self.siamese_net.compile(loss="binary_crossentropy", optimizer=self.optimizer)#metrics
         self.siamese_net.compile(loss=self.contrastive_loss, optimizer=self.optimizer, metrics=[self.accuracy])
         
-        #metrics=['binary_accuracy'],
-        #self.siamese_net.summary()
-        #self.siamese_net.count_params()
         if verbose:
             print('Siamese Network Created\n')
             
