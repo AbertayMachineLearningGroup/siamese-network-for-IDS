@@ -47,6 +47,8 @@ TBU
 
 All processed files can be downloaded from [here](https://www.dropbox.com/sh/8y9jni9einfjnyd/AADcSqNs4cG0sQfy2Cias4tfa?dl=0)
 
+All pairs can be downloaded from [here](https://www.dropbox.com/sh/8y9jni9einfjnyd/AADcSqNs4cG0sQfy2Cias4tfa?dl=0)
+
 ## To run the script with the default parameters:
 To run (remember to add the parameters as specified in the below tables as needed):
 - **CICIDS2017**: python main.py --path {} --dataset_name CICIDS 
