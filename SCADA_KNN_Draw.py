@@ -17,6 +17,17 @@ test_size = 0.5
 path = '/home/hananhindy/Dropbox/SiameseNetworkDatasetFiles/DatasetProcessedFiles/SCADA_dataset_processed.csv'
 dataset = pd.read_csv(path)
 dataset = dataset.dropna()
+dataset = dataset.values
+
+original_classes = np.unique(dataset[:, 12])
+m = []
+for c in original_classes:
+    if len(m) == 0:
+        m = dataset[dataset[:,12] == c, :][0:1000,:]
+    else:
+        m = np.append(m, dataset[dataset[:,12] == c, :][0:1000:,:], axis = 0)
+
+dataset = pd.DataFrame(m)
 
 X = dataset.iloc[:, 0: 10].values
 y = dataset.iloc[:, 12].values
