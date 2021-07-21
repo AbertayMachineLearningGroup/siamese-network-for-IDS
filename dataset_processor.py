@@ -131,7 +131,7 @@ class DatasetHandler:
                 
         return temp
     
-    def encode_split(self, training_categories, testing_categories, max_instances_count = -1, k_fold = 0, verbose = True):
+    def encode_split(self, training_categories, testing_categories, verbose = True):
         self.training_categories = training_categories
         self.testing_categories = testing_categories
         
@@ -152,8 +152,6 @@ class DatasetHandler:
         self.testing_instances_count = {} 
         self.dataset_all = {}
         self.dataset_all_count = {}
-        if verbose and max_instances_count != -1:
-            print('! Restricting the numebr of instances from each class to {}'.format(max_instances_count))
         
         if training_categories == testing_categories:
             print('\nTraining:Testing 80%:20%\n')
@@ -166,9 +164,7 @@ class DatasetHandler:
                     temp = self.dataset[self.dataset[:, 12] == category, 0: 10]
                     
                 temp_size = np.size(temp, axis = 0)
-                if max_instances_count != -1:
-                    temp_size = min(temp_size, max_instances_count)
-                     
+                      
                 self.dataset_all[category] = temp
                 self.dataset_all_count[category] = np.size(temp, axis = 0)
                 print(category)
@@ -185,8 +181,6 @@ class DatasetHandler:
 
 
                 temp_size = np.size(temp, axis = 0)
-                if max_instances_count != -1:
-                    temp_size = min(temp_size, max_instances_count)
                 
                 self.dataset_all[training] = temp
                 self.dataset_all_count[training] = np.size(temp, axis = 0)
@@ -203,9 +197,7 @@ class DatasetHandler:
                     temp = self.dataset_dictionary[testing]
                      
                 temp_size = np.size(temp, axis = 0)
-                if max_instances_count != -1:
-                    temp_size = min(temp_size, max_instances_count)      
-                
+                 
                 self.dataset_all[testing] = temp
                 self.dataset_all_count[testing] = np.size(temp, axis = 0)
                 
@@ -221,23 +213,7 @@ class DatasetHandler:
         else:
             self.number_of_features = np.size(self.dataset_dictionary[training_categories[0]], axis = 1)
             
-        
-    def generate_training_representitives(self, number_of_reps, verbose = False):
-        self.training_reps = {};
-        self.number_of_reps = number_of_reps
-        for category in self.training_categories:
-            kmenas = KMeans(n_clusters=number_of_reps)
-            kmenas.fit(self.training_dataset[category])
-            self.training_reps[category] = kmenas.cluster_centers_
-            
-    def generate_training_representitives_of_50_percent(self, number_of_reps, verbose = False):
-        self.training_reps = {};
-        self.number_of_reps = number_of_reps
-        for category in self.training_categories:
-            kmenas = KMeans(n_clusters=number_of_reps)
-            kmenas.fit(self.dataset_all[category][:self.dataset_all_count[category]//2, :])
-            self.training_reps[category] = kmenas.cluster_centers_
-            
+                    
     def load_batch(self, batch_size, file_name):
         print(file_name)
         pairs = [np.zeros((batch_size, self.number_of_features)) for i in range(2)]

@@ -9,7 +9,6 @@ import itertools
 from dataset_processor import DatasetHandler
 from siamese_net import SiameseNet
 from args_handler import Arguments
-import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -34,10 +33,7 @@ if __name__ == "__main__":
         training_categories = all_conbinations[args.comb_index]
         testing_categories =  list(set(all_classes) - set(training_categories))
 
-    dataset_handler.encode_split(training_categories, testing_categories, args.max_from_class, args.k_fold_number, args.verbose)
-    
-    if args.number_of_reps > 0:
-        dataset_handler.generate_training_representitives(args.number_of_reps, args.verbose)
+    dataset_handler.encode_split(training_categories, testing_categories, args.verbose)
     
     if args.verbose:
         print('!Starting!')
@@ -45,20 +41,15 @@ if __name__ == "__main__":
     with open(args.output_file_name, "a") as file_writer:
         file_writer.write("Dataset, {}\n".format(args.dataset_name))
         file_writer.write("Network ID, {}\n".format(args.network_id))
-        file_writer.write("Max from class, {}\n".format(args.max_from_class))
         file_writer.write("Training Batch:Testing Batch, {}:{}\n".format(args.batch_size, args.testing_batch_size))
         file_writer.write("No of iterations, {}\n".format(args.niterations))
-        file_writer.write("k =, {}\n".format(args.k_fold_number))
-        file_writer.write("n_reps =, {}, reps_from_all = {}\n".format(args.number_of_reps, args.reps_from_all))
         file_writer.write("acc_not_in_training, acc_added_labels\n")
         file_writer.write(", ".join(training_categories) + "\n")
 
     for run in range(args.nruns):
         print(args.network_id)
         
-        if args.print_loss:
-            loss_array = []
-        
+    
         if args.verbose:
             print("Run #{}".format(run))
             
